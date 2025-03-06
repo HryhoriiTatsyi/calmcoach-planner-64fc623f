@@ -19,25 +19,38 @@ export const callOpenAI = async (options: OpenAIRequestOptions) => {
   }
 
   try {
+    // Додаємо таймаут для запиту
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify(options)
-    });
+      body: JSON.stringify(options),
+      signal: controller.signal
+    }).finally(() => clearTimeout(timeoutId));
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
       throw new Error(`Помилка API OpenAI: ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
     return data.choices[0].message.content;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Помилка при виклику OpenAI API:', error);
-    throw error;
+    
+    // Перевіряємо різні типи помилок і надаємо більш зрозумілі повідомлення
+    if (error.name === 'AbortError') {
+      throw new Error('Запит до OpenAI перевищив час очікування. Будь ласка, спробуйте ще раз.');
+    } else if (error.message === 'Failed to fetch') {
+      throw new Error('Неможливо з\'єднатися з API OpenAI. Перевірте своє інтернет-з\'єднання або спробуйте пізніше.');
+    } else {
+      throw error;
+    }
   }
 };
 

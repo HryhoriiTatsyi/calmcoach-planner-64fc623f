@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Clock, ArrowRight, Download, Loader2 } from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, Download, Loader2, AlertCircle } from 'lucide-react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
 import { generateActionPlan } from '../services/openAiService';
 import { useToast } from '@/components/ui/use-toast';
 import ApiKeyInput from './ApiKeyInput';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface PathGeneratorProps {
   currentState: CurrentStateData;
@@ -33,6 +34,7 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
   const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   
   const handleGeneratePlan = async () => {
@@ -46,12 +48,14 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
     }
     
     setIsGenerating(true);
+    setError(null);
     
     try {
       // Використовуємо OpenAI API для генерації плану
       const plan = await generateActionPlan(currentState, desiredState);
       setGeneratedPlan(plan);
     } catch (error: any) {
+      setError(error.message || "Не вдалося згенерувати план. Перевірте свій API-ключ та спробуйте знову.");
       toast({
         title: "Помилка генерації",
         description: error.message || "Не вдалося згенерувати план. Перевірте свій API-ключ та спробуйте знову.",
@@ -130,6 +134,16 @@ ${index + 1}. ${step.title}
       </CardHeader>
       
       <CardContent className="p-6">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Помилка</AlertTitle>
+            <AlertDescription>
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {!generatedPlan ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-6 text-muted-foreground">
@@ -146,6 +160,7 @@ ${index + 1}. ${step.title}
               onClick={handleGeneratePlan}
               disabled={isGenerating || !areInputsValid()}
               className="min-w-[200px]"
+              type="button" // Додаємо тип "button", щоб запобігти перезавантаженню сторінки
             >
               {isGenerating ? (
                 <>
