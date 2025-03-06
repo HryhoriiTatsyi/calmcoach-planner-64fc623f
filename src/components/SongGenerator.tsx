@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
-  // Очищення аудіо при розмонтуванні компонента
   useEffect(() => {
     return () => {
       if (audio) {
@@ -40,7 +38,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     };
   }, [audio]);
 
-  const handleGenerateLyrics = async () => {
+  const handleGenerateLyrics = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    
     setIsGeneratingLyrics(true);
     setError(null);
     setSongLyrics(null);
@@ -61,14 +61,15 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     }
   };
 
-  const handleGenerateAudio = async () => {
+  const handleGenerateAudio = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    
     if (!songLyrics) return;
     
     setIsGeneratingAudio(true);
     setError(null);
     
     try {
-      // Використання SunoAPI для створення пісні
       const response = await fetch('https://api.suno.ai/v1/generations', {
         method: 'POST',
         headers: {
@@ -88,11 +89,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       }
       
       const data = await response.json();
-      // Примітка: це спрощений приклад, реальна API може мати інший формат відповіді
       if (data.audio_url) {
         setAudioUrl(data.audio_url);
         
-        // Створюємо новий аудіо елемент
         const newAudio = new Audio(data.audio_url);
         newAudio.addEventListener('ended', () => setIsPlaying(false));
         setAudio(newAudio);
@@ -142,7 +141,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   };
 
   const formatLyrics = (lyrics: string) => {
-    // Розділяємо текст пісні на рядки та додаємо HTML форматування
     return lyrics.split('\n').map((line, index) => (
       <p key={index} className={line.trim() === '' ? 'h-4' : 'my-1'}>
         {line || '\u00A0'}
