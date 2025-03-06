@@ -82,31 +82,37 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
       
       try {
-        const response = await fetch('https://api.suno.ai/v1/generations', {
+        // Використовуємо новий API endpoint і формат запиту
+        const response = await fetch('https://apibox.erweima.ai/api/v1/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'Authorization': `Bearer ${sunoApiKey}`
           },
           body: JSON.stringify({
             prompt: songLyrics.lyrics,
+            style: "Pop",
             title: songLyrics.title,
-            style_preset: "pop_happy_cheerful_upbeat",
-            language: "ukrainian"
+            customMode: true,
+            instrumental: false,
+            model: "V4"
           }),
           signal: controller.signal
         }).finally(() => clearTimeout(timeoutId));
         
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-          throw new Error(`Помилка Suno API: ${errorData.error?.message || response.statusText}`);
+          throw new Error(`Помилка API: ${errorData.error?.message || response.statusText}`);
         }
         
         const data = await response.json();
-        if (data.audio_url) {
-          setAudioUrl(data.audio_url);
+        if (data.audioUrl || data.url) {
+          // Адаптуємося до можливих форматів відповіді
+          const url = data.audioUrl || data.url;
+          setAudioUrl(url);
           
-          const newAudio = new Audio(data.audio_url);
+          const newAudio = new Audio(url);
           newAudio.addEventListener('ended', () => setIsPlaying(false));
           setAudio(newAudio);
         } else {
@@ -114,9 +120,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         }
       } catch (fetchError: any) {
         if (fetchError.name === 'AbortError') {
-          throw new Error('Запит до Suno API перевищив час очікування. Будь ласка, спробуйте ще раз.');
+          throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуйте ще раз.');
         } else if (fetchError.message === 'Failed to fetch') {
-          throw new Error('Неможливо з\'єднатися з API Suno. Перевірте своє інтернет-з\'єднання, коректність API ключа або спробуйте пізніше.');
+          throw new Error('Неможливо з\'єднатися з API. Перевірте своє інтернет-з\'єднання, коректність API ключа або спробуйте пізніше.');
         } else {
           throw fetchError;
         }

@@ -32,11 +32,13 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      const response = await fetch('https://api.suno.ai/v1/health', {
+      // Змінено на новий API endpoint
+      const response = await fetch('https://apibox.erweima.ai/api/v1/health', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${key}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         signal: controller.signal
       }).finally(() => clearTimeout(timeoutId));
@@ -51,7 +53,7 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       if (error.name === 'AbortError') {
         throw new Error('Timeout при перевірці ключа');
       } else if (error.message === 'Failed to fetch') {
-        throw new Error('Неможливо з\'єднатися з API Suno. Перевірте своє інтернет-з\'єднання або спробуйте пізніше.');
+        throw new Error('Неможливо з\'єднатися з API. Перевірте своє інтернет-з\'єднання або спробуйте пізніше.');
       }
       throw error;
     }
@@ -72,7 +74,7 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       
       toast({
         title: "Успішно",
-        description: "API ключ Suno збережено",
+        description: "API ключ збережено",
       });
     } catch (err: any) {
       setError(err.message || "Помилка при збереженні ключа");
@@ -91,10 +93,10 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       <CardHeader className="bg-calm-50 border-b border-calm-100">
         <div className="flex items-center gap-2">
           <Music size={20} className="text-primary" />
-          <CardTitle className="text-xl font-medium">Ключ SunoAPI</CardTitle>
+          <CardTitle className="text-xl font-medium">Ключ API</CardTitle>
         </div>
         <CardDescription>
-          Для створення аудіо пісні потрібен ключ API Suno
+          Для створення аудіо пісні потрібен ключ API
         </CardDescription>
       </CardHeader>
       
@@ -110,18 +112,18 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
           <Alert className="bg-calm-50">
             <KeyRound className="h-4 w-4" />
             <AlertDescription>
-              Щоб створити мотиваційну пісню, потрібен ключ API Suno. Ви можете отримати його на сайті <a href="https://sunoapi.org/" target="_blank" rel="noopener noreferrer" className="text-primary underline">SunoAPI</a>.
+              Щоб створити мотиваційну пісню, потрібен ключ API. Ви можете отримати його на сайті <a href="https://apibox.erweima.ai/" target="_blank" rel="noopener noreferrer" className="text-primary underline">erweima.ai</a>.
             </AlertDescription>
           </Alert>
           
           <div className="space-y-2">
-            <Label htmlFor="sunoApiKey">API ключ Suno</Label>
+            <Label htmlFor="sunoApiKey">API ключ</Label>
             <Input 
               id="sunoApiKey" 
               type="password" 
               value={apiKey} 
               onChange={(e) => setApiKey(e.target.value)} 
-              placeholder="Введіть ваш ключ API Suno" 
+              placeholder="Введіть ваш ключ API" 
               className="font-mono"
             />
             <p className="text-xs text-muted-foreground">
