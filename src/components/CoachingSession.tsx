@@ -6,8 +6,10 @@ import CurrentState from './CurrentState';
 import DesiredState from './DesiredState';
 import PathGenerator from './PathGenerator';
 import MentalHealthTest from './MentalHealthTest';
+import SongGenerator from './SongGenerator';
 import { Button } from '@/components/ui/button';
 import { BrainCircuit } from 'lucide-react';
+import { UserInfo } from '../services/openAiService';
 
 const CoachingSession = () => {
   const [currentState, setCurrentState] = useState<CurrentStateData>({
@@ -29,6 +31,7 @@ const CoachingSession = () => {
   });
   
   const [showTest, setShowTest] = useState(false);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   
   const handleTestComplete = (result: { 
     currentState: { 
@@ -45,7 +48,7 @@ const CoachingSession = () => {
       relationships: string;
       physical: string;
     }
-  }) => {
+  }, info: UserInfo) => {
     setCurrentState(prev => ({
       ...prev,
       emotional: result.currentState.emotional,
@@ -65,6 +68,7 @@ const CoachingSession = () => {
       timeframe: '3 місяці' // Встановлюємо типовий часовий діапазон
     }));
     
+    setUserInfo(info);
     setShowTest(false);
   };
   
@@ -79,7 +83,7 @@ const CoachingSession = () => {
             Сплануйте свій шлях від точки А до точки Б
           </h2>
           <p className="text-lg text-muted-foreground">
-            Заповніть деталі про ваш поточний стан та бажане майбутнє, і Вікторія створить персоналізований план дій, щоб допомогти вам подолати цей розрив.
+            Заповніть деталі про ваш поточний стан та бажане майбутнє, і Вікторія створить персоналізований план дій та мотиваційну пісню, щоб допомогти вам подолати цей розрив.
           </p>
           
           <div className="mt-8">
@@ -88,6 +92,7 @@ const CoachingSession = () => {
               onClick={() => setShowTest(true)}
               className="gap-2"
               disabled={showTest}
+              type="button"
             >
               <BrainCircuit size={18} />
               Пройти тест ментального здоров'я
@@ -110,9 +115,23 @@ const CoachingSession = () => {
               </div>
             </div>
             
-            <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-              <PathGenerator currentState={currentState} desiredState={desiredState} />
+            <div className="animate-fade-in-up mb-12" style={{ animationDelay: '0.5s' }}>
+              <PathGenerator 
+                currentState={currentState} 
+                desiredState={desiredState} 
+                userInfo={userInfo} 
+              />
             </div>
+            
+            {userInfo && (
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+                <SongGenerator 
+                  currentState={currentState}
+                  desiredState={desiredState}
+                  userInfo={userInfo}
+                />
+              </div>
+            )}
           </>
         )}
       </div>

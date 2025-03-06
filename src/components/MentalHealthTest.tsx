@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, Brain, CheckCircle2 } from 'lucide-react';
-import { generateMentalHealthTest } from '../services/openAiService';
+import { generateMentalHealthTest, UserInfo } from '../services/openAiService';
 import { useToast } from '@/components/ui/use-toast';
 import ApiKeyInput from './ApiKeyInput';
+import UserInfoForm from './UserInfoForm';
 
 interface Question {
   id: number;
@@ -86,7 +87,7 @@ interface TestResult {
 }
 
 interface MentalHealthTestProps {
-  onComplete: (result: TestResult) => void;
+  onComplete: (result: TestResult, userInfo: UserInfo) => void;
 }
 
 const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
@@ -94,6 +95,8 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
   const [answers, setAnswers] = useState<{[key: number]: number}>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
+  const [showUserInfo, setShowUserInfo] = useState(true);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
   const { toast } = useToast();
   
@@ -116,6 +119,11 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     }
   };
 
+  const handleUserInfoComplete = (info: UserInfo) => {
+    setUserInfo(info);
+    setShowUserInfo(false);
+  };
+
   const handleComplete = async () => {
     if (!apiKeySet) {
       toast({
@@ -125,16 +133,25 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
       });
       return;
     }
+
+    if (!userInfo) {
+      toast({
+        title: "Інформація користувача відсутня",
+        description: "Будь ласка, введіть свою особисту інформацію перед продовженням",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsGenerating(true);
     
     try {
       // Використовуємо OpenAI API для аналізу результатів тесту
-      const result = await generateMentalHealthTest(answers);
+      const result = await generateMentalHealthTest(answers, userInfo);
       
       setIsGenerating(false);
       setTestCompleted(true);
-      onComplete(result);
+      onComplete(result, userInfo);
     } catch (error: any) {
       setIsGenerating(false);
       toast({
@@ -145,15 +162,21 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     }
   };
   
-  const currentQuestion = mentalHealthQuestions[currentStep];
-  const isLastQuestion = currentStep === mentalHealthQuestions.length - 1;
-  const canProceed = currentQuestion && answers[currentQuestion.id] !== undefined;
-  
   if (!apiKeySet) {
     return (
       <ApiKeyInput onApiKeySet={() => setApiKeySet(true)} />
     );
   }
+
+  if (showUserInfo) {
+    return (
+      <UserInfoForm onComplete={handleUserInfoComplete} />
+    );
+  }
+  
+  const currentQuestion = mentalHealthQuestions[currentStep];
+  const isLastQuestion = currentStep === mentalHealthQuestions.length - 1;
+  const canProceed = currentQuestion && answers[currentQuestion.id] !== undefined;
   
   return (
     <Card className="w-full border-calm-100 shadow-sm overflow-hidden">
@@ -212,6 +235,7 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
                 onClick={handleComplete}
                 disabled={isGenerating}
                 className="min-w-[200px]"
+                type="button"
               >
                 {isGenerating ? (
                   <>
@@ -240,12 +264,14 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
             variant="outline" 
             onClick={handleBack}
             disabled={currentStep === 0}
+            type="button"
           >
             Назад
           </Button>
           <Button 
             onClick={handleNext}
             disabled={!canProceed}
+            type="button"
           >
             {isLastQuestion ? "Завершити тест" : "Далі"}
           </Button>

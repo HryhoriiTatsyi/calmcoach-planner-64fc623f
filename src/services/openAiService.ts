@@ -54,7 +54,7 @@ export const callOpenAI = async (options: OpenAIRequestOptions) => {
   }
 };
 
-export const generateMentalHealthTest = async (answers: { [key: number]: number }) => {
+export const generateMentalHealthTest = async (answers: { [key: number]: number }, userInfo: UserInfo) => {
   const messages: OpenAIMessage[] = [
     {
       role: 'system',
@@ -81,7 +81,8 @@ export const generateMentalHealthTest = async (answers: { [key: number]: number 
     },
     {
       role: 'user',
-      content: `Ось мої відповіді на тест ментального здоров'я (індекс варіанта починається з 0, де 0 - найкращий/позитивний варіант, а 3 - найгірший/негативний): ${JSON.stringify(answers)}. 
+      content: `Ось інформація про мене: Ім'я: ${userInfo.name}, Вік: ${userInfo.age}, Стать: ${userInfo.gender}.
+      Ось мої відповіді на тест ментального здоров'я (індекс варіанта починається з 0, де 0 - найкращий/позитивний варіант, а 3 - найгірший/негативний): ${JSON.stringify(answers)}. 
       Проаналізуй відповіді та створи JSON з поточним станом та рекомендованим бажаним станом для покращення. 
       Бажаний стан має бути реалістичним покращенням поточного стану.`
     }
@@ -119,7 +120,7 @@ export const generateMentalHealthTest = async (answers: { [key: number]: number 
   }
 };
 
-export const generateActionPlan = async (currentState: any, desiredState: any) => {
+export const generateActionPlan = async (currentState: any, desiredState: any, userInfo: UserInfo) => {
   const messages: OpenAIMessage[] = [
     {
       role: 'system',
@@ -142,7 +143,8 @@ export const generateActionPlan = async (currentState: any, desiredState: any) =
     },
     {
       role: 'user',
-      content: `Мій поточний стан: ${JSON.stringify(currentState)}
+      content: `Інформація про мене: Ім'я: ${userInfo.name}, Вік: ${userInfo.age}, Стать: ${userInfo.gender}.
+      Мій поточний стан: ${JSON.stringify(currentState)}
       Мій бажаний стан: ${JSON.stringify(desiredState)}
       Будь ласка, створіть для мене персоналізований план дій.`
     }
@@ -180,3 +182,67 @@ export const generateActionPlan = async (currentState: any, desiredState: any) =
     throw error;
   }
 };
+
+export interface UserInfo {
+  name: string;
+  age: string;
+  gender: string;
+}
+
+export const generateMotivationalSong = async (currentState: any, desiredState: any, userInfo: UserInfo) => {
+  const messages: OpenAIMessage[] = [
+    {
+      role: 'system',
+      content: `Ви талановитий автор пісень, який створює мотиваційні та веселі пісні українською мовою.
+      Створіть слова пісні, яка надихне людину досягти її бажаного стану.
+      Пісня має бути оптимістичною, мотивуючою, з позитивним меседжем.
+      Включіть у текст пісні ім'я людини та її особисті цілі з бажаного стану.
+      Створіть структуру з 2 куплетів та приспіву.
+      Обов'язково поверніть текст у такому форматі:
+      {
+        "title": "Назва пісні",
+        "lyrics": "Повний текст пісні з розділеними куплетами та приспівом"
+      }`
+    },
+    {
+      role: 'user',
+      content: `Інформація про мене: Ім'я: ${userInfo.name}, Вік: ${userInfo.age}, Стать: ${userInfo.gender}.
+      Мій поточний стан: ${JSON.stringify(currentState)}
+      Мій бажаний стан: ${JSON.stringify(desiredState)}
+      Створіть для мене мотиваційну та веселу пісню українською мовою, яка надихне мене досягти мого бажаного стану.`
+    }
+  ];
+
+  try {
+    const result = await callOpenAI({
+      model: 'gpt-4o',
+      messages,
+      temperature: 0.8,
+      max_tokens: 2000
+    });
+
+    try {
+      // Додаємо додаткову обробку для видалення будь-яких додаткових символів навколо JSON
+      const cleanedResult = result.trim().replace(/^```json/, '').replace(/```$/, '');
+      return JSON.parse(cleanedResult);
+    } catch (error) {
+      console.error('Помилка парсингу JSON відповіді:', result);
+      
+      // Спроба знайти JSON в тексті за допомогою регулярного виразу
+      try {
+        const jsonMatch = result.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (innerError) {
+        console.error('Не вдалося знайти JSON у відповіді:', innerError);
+      }
+      
+      throw new Error('Помилка при обробці відповіді від AI. Будь ласка, спробуйте ще раз.');
+    }
+  } catch (error) {
+    console.error('Помилка при генерації тексту пісні:', error);
+    throw error;
+  }
+};
+
