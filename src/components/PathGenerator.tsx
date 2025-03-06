@@ -612,27 +612,25 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
     try {
       console.log('PathGenerator: Починаємо завантаження аудіо з URL:', url);
       
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Не вдалося завантажити аудіофайл');
-      }
-      
-      const blob = await response.blob();
-      
-      const blobUrl = URL.createObjectURL(blob);
-      
       const a = document.createElement('a');
-      a.href = blobUrl;
+      a.href = url;
       a.download = filename;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      
       document.body.appendChild(a);
       a.click();
       
+      console.log('PathGenerator: Клік по елементу завантаження виконано');
+      
       setTimeout(() => {
-        URL.revokeObjectURL(blobUrl);
         document.body.removeChild(a);
       }, 100);
       
-      console.log('PathGenerator: Завантаження аудіо успішно завершено');
+      toast({
+        title: "Завантаження розпочато",
+        description: "Ваша пісня завантажується. Перевірте папку з завантаженнями.",
+      });
     } catch (error) {
       console.error('PathGenerator: Помилка при завантаженні аудіо:', error);
       toast({

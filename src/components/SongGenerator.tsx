@@ -373,47 +373,46 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   };
 
   const downloadAudio = () => {
-    if (!audioUrl) return;
-    
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', audioUrl, true);
-    xhr.responseType = 'blob';
-    
-    xhr.onload = function() {
-      if (this.status === 200) {
-        const blob = new Blob([this.response], { type: 'audio/mpeg' });
-        const blobUrl = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
-        }, 100);
-      } else {
-        console.error('Помилка завантаження файлу:', this.status);
-        toast({
-          title: "Помилка завантаження",
-          description: "Не вдалося завантажити аудіофайл",
-          variant: "destructive",
-        });
-      }
-    };
-    
-    xhr.onerror = function() {
-      console.error('Помилка мережі при завантаженні файлу');
+    if (!audioUrl) {
+      console.error('Помилка: відсутній URL аудіо для завантаження');
       toast({
-        title: "Помилка мережі",
-        description: "Не вдалося завантажити аудіофайл через помилку мережі",
+        title: "Помилка завантаження",
+        description: "Не вдалося знайти аудіофайл для завантаження",
         variant: "destructive",
       });
-    };
+      return;
+    }
     
-    xhr.send();
+    console.log('Починаємо завантаження аудіо з URL:', audioUrl);
+    
+    const a = document.createElement('a');
+    a.href = audioUrl;
+    a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    
+    document.body.appendChild(a);
+    
+    try {
+      a.click();
+      console.log('Клік по елементу завантаження виконано');
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+      }, 100);
+      
+      toast({
+        title: "Завантаження розпочато",
+        description: "Ваша пісня завантажується. Перевірте папку з завантаженнями.",
+      });
+    } catch (error) {
+      console.error('Помилка при кліку на елемент завантаження:', error);
+      toast({
+        title: "Помилка завантаження",
+        description: "Не вдалося завантажити аудіофайл. Спробуйте відкрити посилання в новій вкладці.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatLyrics = (lyrics: string) => {
