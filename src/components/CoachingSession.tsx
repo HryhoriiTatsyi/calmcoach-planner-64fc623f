@@ -30,15 +30,39 @@ const CoachingSession = () => {
   
   const [showTest, setShowTest] = useState(false);
   
-  const handleTestComplete = (result: { currentState: string, desiredState: string }) => {
+  const handleTestComplete = (result: { 
+    currentState: { 
+      emotional: string;
+      mental: string;
+      career: string;
+      relationships: string;
+      physical: string;
+    },
+    desiredState: {
+      emotional: string;
+      mental: string;
+      career: string;
+      relationships: string;
+      physical: string;
+    }
+  }) => {
     setCurrentState(prev => ({
       ...prev,
-      mental: result.currentState
+      emotional: result.currentState.emotional,
+      mental: result.currentState.mental,
+      career: result.currentState.career,
+      relationships: result.currentState.relationships,
+      physical: result.currentState.physical
     }));
     
     setDesiredState(prev => ({
       ...prev,
-      mental: result.desiredState
+      emotional: result.desiredState.emotional,
+      mental: result.desiredState.mental,
+      career: result.desiredState.career,
+      relationships: result.desiredState.relationships,
+      physical: result.desiredState.physical,
+      timeframe: '3 місяці' // Встановлюємо типовий часовий діапазон
     }));
     
     setShowTest(false);
