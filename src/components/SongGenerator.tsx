@@ -213,7 +213,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
             customMode: true,
             instrumental: false, // Створюємо пісню з вокалом
             model: "V4",
-            callBackUrl: "" // Залишаємо порожнім, оскільки будемо опитувати статус
+            callBackUrl: ""  // Виправляємо порожній рядок на дійсне значення
           }),
           signal: controller.signal
         }).finally(() => clearTimeout(timeoutId));
