@@ -193,7 +193,8 @@ const CoachingSession = () => {
               <PathGenerator 
                 currentState={currentState} 
                 desiredState={desiredState} 
-                userInfo={userInfo} 
+                userInfo={userInfo}
+                onUpdateUserInfo={setUserInfo}
               />
             </div>
           </>

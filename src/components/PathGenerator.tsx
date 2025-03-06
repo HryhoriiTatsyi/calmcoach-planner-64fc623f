@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ interface PathGeneratorProps {
   currentState: CurrentStateData;
   desiredState: DesiredStateData;
   userInfo: UserInfo | null;
+  onUpdateUserInfo: (info: UserInfo) => void;
 }
 
 interface Step {
@@ -41,7 +41,6 @@ interface SongProgress {
   message: string;
 }
 
-// Функція для конвертації коротких імен у повну форму
 const getFullName = (name: string): string => {
   const nameMap: Record<string, string> = {
     'Саша (ч)': 'Олександр',
@@ -85,11 +84,10 @@ const getFullName = (name: string): string => {
     'Слава': 'В\'ячеслав'
   };
 
-  // Якщо знайдено коротку форму імені в списку, повертаємо повну форму
   return nameMap[name] || name;
 };
 
-const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorProps) => {
+const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo }: PathGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
   const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
@@ -102,7 +100,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   const [validationError, setValidationError] = useState<string | null>(null);
   const { toast } = useToast();
   
-  // Завантаження збереженого стану з localStorage
   useEffect(() => {
     try {
       const savedPlan = localStorage.getItem('generatedPlan');
@@ -130,7 +127,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     }
   }, []);
 
-  // Збереження стану в localStorage
   useEffect(() => {
     try {
       if (generatedPlan) {
@@ -171,13 +167,11 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     }
   }, [taskId]);
   
-  // Функція для отримання повного імені користувача
   const getFullUserName = () => {
     if (!userInfo || !userInfo.name) return 'користувача';
     return getFullName(userInfo.name);
   };
   
-  // Перевіряємо, чи є аудіо пісні кожні 10 секунд
   useEffect(() => {
     if (!songProgress?.isGenerating || !userInfo || !taskId) return;
     
@@ -187,7 +181,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         
         if (!sunoApiKey) return;
         
-        // Перевіряємо статус по taskId
         const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
           method: 'GET',
           headers: {
@@ -219,7 +212,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         } else if (data.data.status === 'PENDING' || 
                    data.data.status === 'TEXT_SUCCESS' || 
                    data.data.status === 'FIRST_SUCCESS') {
-          // Оновлюємо прогрес на основі статусу
           let progress = songProgress.progress;
           let message = songProgress.message;
           
@@ -242,7 +234,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       }
     };
     
-    // Запускаємо перевірку відразу при монтуванні компонента
     checkForAudio();
     
     const intervalId = setInterval(checkForAudio, 10000);
@@ -253,7 +244,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     if (!userInfo) return;
     
     try {
-      // Встановлюємо стан прогресу для генерації тексту пісні
       setSongProgress({
         isGenerating: true,
         stage: 'lyrics',
@@ -261,10 +251,8 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         message: 'Генеруємо текст пісні...'
       });
       
-      // Генеруємо текст пісні
       const songData = await generateMotivationalSong(currentState, desiredState, userInfo);
       
-      // Оновлюємо прогрес після генерації тексту
       setSongProgress({
         isGenerating: true,
         stage: 'audio',
@@ -272,13 +260,11 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         message: 'Створюємо аудіо пісні (може зайняти до 5 хвилин)...'
       });
       
-      // Генеруємо аудіо пісні
       const newTaskId = await generateAudio(songData);
       if (newTaskId) {
         setTaskId(newTaskId);
       }
       
-      // Продовжуємо показувати прогрес, пізніше перевіримо наявність аудіо через useEffect
       setSongProgress({
         isGenerating: true,
         stage: 'audio',
@@ -286,7 +272,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         message: 'Очікуємо завершення генерації аудіо (може зайняти до 5 хвилин)...'
       });
       
-      // Відправляємо електронний лист з інформацією
       await sendEmailWithUserData();
       
     } catch (error: any) {
@@ -318,7 +303,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
     }
     
-    // Використовуємо AbortController для таймауту запиту
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
     
@@ -353,7 +337,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         throw new Error(`Помилка API: ${data.msg || 'Невідома помилка'}`);
       }
       
-      // Збільшуємо прогрес після успішного створення завдання
       setSongProgress(prev => prev ? {
         ...prev,
         progress: 50,
@@ -374,7 +357,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   
   const sendEmailWithUserData = async () => {
     try {
-      // Створюємо об'єкт з даними для відправки
       const emailData = {
         to: 'vikktin@gmail.com',
         subject: `Нові дані коучинг-сесії від ${getFullUserName()}`,
@@ -395,25 +377,19 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         `
       };
       
-      // У реальному проекті тут був би код для відправки електронної пошти
-      // Оскільки ми не маємо бекенду, просто логуємо дані
       console.log('Дані для відправки на email:', emailData);
-      
     } catch (error) {
       console.error('Помилка при спробі відправити email:', error);
     }
   };
 
-  // Функція для перевірки заповнення всіх обов'язкових полів
   const validateInputs = () => {
-    // Перевірка полів поточного стану
     if (!currentState.emotional) return "Будь ласка, заповніть поле 'Емоційний стан' у Поточному стані";
     if (!currentState.mental) return "Будь ласка, заповніть поле 'Ментальний стан' у Поточному стані";
-    if (!currentState.career) return "Будь ласка, заповніть поле 'Кар'єрний стан' у Поточному стані";
+    if (!currentState.career) return "Будь ласка, заповніть поле 'Кар'єрний стан' у По��очному стані";
     if (!currentState.relationships) return "Будь ласка, заповніть поле 'Стосунки' у Поточному стані";
     if (!currentState.physical) return "Будь ласка, заповніть поле 'Фізичний стан' у Поточному стані";
     
-    // Перевірка полів бажаного стану
     if (!desiredState.emotional) return "Будь ласка, заповніть поле 'Емоційний стан' у Бажаному стані";
     if (!desiredState.mental) return "Будь ласка, заповніть поле 'Ментальний стан' у Бажаному стані";
     if (!desiredState.career) return "Будь ласка, заповніть поле 'Кар'єрний стан' у Бажаному стані";
@@ -434,13 +410,11 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       return;
     }
 
-    // Перевіряємо, чи є інформація про користувача
     if (!userInfo) {
       setShowUserInfoForm(true);
       return;
     }
 
-    // Валідація всіх полів
     const validationResult = validateInputs();
     if (validationResult) {
       setValidationError(validationResult);
@@ -457,11 +431,9 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     setError(null);
     
     try {
-      // Використовуємо OpenAI API для генерації плану
       const plan = await generateActionPlan(currentState, desiredState, userInfo);
       setGeneratedPlan(plan);
       
-      // Запускаємо автоматичну генерацію пісні як бонусу
       toast({
         title: "План згенеровано успішно",
         description: "Ваш персоналізований план дій готовий. Розпочалась генерація бонусної пісні!",
@@ -482,18 +454,16 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   };
   
   const handleUserInfoSubmit = (info: UserInfo) => {
-    setUserInfo(info);
+    onUpdateUserInfo(info);
     setShowUserInfoForm(false);
     localStorage.setItem('userInfo', JSON.stringify(info));
     
-    // Після збереження інформації, спробуйте знову згенерувати план
     handleGeneratePlan();
   };
   
   const downloadPlan = () => {
     if (!generatedPlan) return;
     
-    // Створюємо текстовий вміст для документу
     let content = `ПЕРСОНАЛІЗОВАНИЙ ПЛАН ДІЙ\n\n`;
     content += `Для: ${getFullUserName() || 'Користувача'}\n`;
     content += `Вік: ${userInfo?.age || 'Не вказано'}\n`;
@@ -509,21 +479,17 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       content += `   Часові рамки: ${step.timeframe}\n\n`;
     });
     
-    // Створюємо об'єкт Blob для документу
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     
-    // Створюємо посилання для завантаження
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `План_дій_${getFullUserName()}.txt`;
     
-    // Додаємо посилання до документу, симулюємо клік і видаляємо посилання
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
   
-  // Кнопка для ручного оновлення статусу пісні
   const handleManualCheckStatus = async () => {
     if (!taskId) return;
     
@@ -532,7 +498,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       
       if (!sunoApiKey) return;
       
-      // Перевіряємо статус по taskId
       const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
         method: 'GET',
         headers: {
@@ -581,7 +546,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
           });
         }
       } else {
-        // Визначаємо поточний статус для відображення користувачу
         let statusMessage = "Статус: ";
         
         switch(data.data.status) {
@@ -746,7 +710,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
               </Button>
             </div>
             
-            {/* Переміщуємо аудіо пісні під заголовок, якщо воно доступне */}
             {audioUrl && (
               <div className="mt-2 p-4 bg-calm-50 rounded-lg border border-calm-100">
                 <div className="flex items-center gap-2 mb-3">
