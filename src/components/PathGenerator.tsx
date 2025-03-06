@@ -763,27 +763,27 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
             <div>
               <h3 className="text-lg font-medium mb-4">Кроки для досягнення цілей</h3>
               
-              <ScrollArea className="h-[400px] sm:h-[500px] pr-4">
-                <div className="space-y-4 sm:space-y-6">
-                  {generatedPlan.steps.map((step, index) => (
-                    <div key={index} className="relative pl-8 pb-6 border-l border-dashed border-calm-200">
-                      <div className="absolute left-0 -translate-x-1/2 bg-white border border-calm-200 rounded-full w-6 h-6 flex items-center justify-center">
-                        <span className="text-xs font-medium">{index + 1}</span>
+              <div className="space-y-4 sm:space-y-6">
+                {generatedPlan.steps.map((step, index) => (
+                  <div key={index} className="relative pl-8 pb-6 border-l border-dashed border-calm-200">
+                    <div className="absolute left-0 -translate-x-1/2 bg-white border border-calm-200 rounded-full w-6 h-6 flex items-center justify-center">
+                      <span className="text-xs font-medium">{index + 1}</span>
+                    </div>
+                    
+                    <div className="bg-white p-3 sm:p-4 rounded-lg border border-calm-100 shadow-sm">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
+                        <h4 className="font-medium text-sm sm:text-base break-words">{step.title}</h4>
+                        <span className="text-xs bg-calm-100 text-calm-800 px-2 py-1 rounded-full whitespace-nowrap self-start">
+                          {step.timeframe}
+                        </span>
                       </div>
-                      
-                      <div className="bg-white p-3 sm:p-4 rounded-lg border border-calm-100 shadow-sm">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
-                          <h4 className="font-medium text-sm sm:text-base break-words">{step.title}</h4>
-                          <span className="text-xs bg-calm-100 text-calm-800 px-2 py-1 rounded-full whitespace-nowrap self-start">
-                            {step.timeframe}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{step.description}</p>
+                      <div className="text-xs sm:text-sm text-muted-foreground space-y-2">
+                        <p className="break-words">{step.description}</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </ScrollArea>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
