@@ -16,20 +16,30 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
     const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
     const savedKey = localStorage.getItem('openai_api_key');
     
+    console.log('ApiKeyInput: Перевірка ключів', { 
+      envKeyExists: !!envApiKey, 
+      savedKeyExists: !!savedKey 
+    });
+    
     if (envApiKey) {
       // Якщо ключ є в змінних середовища, автоматично переходимо далі
+      console.log('ApiKeyInput: Знайдено ключ у змінних середовища');
       localStorage.setItem('openai_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
       onApiKeySet();
       return;
     } else if (savedKey) {
       // Якщо ключа немає в env, але є в localStorage
+      console.log('ApiKeyInput: Знайдено збережений ключ у localStorage');
       setApiKey(savedKey);
       setIsSaved(true);
+    } else {
+      console.log('ApiKeyInput: Ключ не знайдено');
     }
   }, [onApiKeySet]);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
+      console.log('ApiKeyInput: Зберігаємо ключ у localStorage');
       localStorage.setItem('openai_api_key', apiKey.trim());
       setIsSaved(true);
       toast({
@@ -39,6 +49,7 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
       });
       onApiKeySet();
     } else {
+      console.error('ApiKeyInput: Спроба зберегти порожній ключ');
       toast({
         title: "Помилка",
         description: "Будь ласка, введіть дійсний API-ключ",

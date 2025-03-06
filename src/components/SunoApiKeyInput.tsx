@@ -23,18 +23,28 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
     const storedKey = localStorage.getItem('suno_api_key');
     
+    console.log('SunoApiKeyInput: Перевірка ключів', { 
+      envKeyExists: !!envApiKey, 
+      storedKeyExists: !!storedKey 
+    });
+    
     if (envApiKey) {
       // Якщо ключ є в змінних середовища, автоматично переходимо далі
+      console.log('SunoApiKeyInput: Знайдено ключ у змінних середовища');
       localStorage.setItem('suno_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
       onApiKeySet();
       return;
     } else if (storedKey) {
+      console.log('SunoApiKeyInput: Знайдено збережений ключ у localStorage');
       setApiKey(storedKey);
+    } else {
+      console.log('SunoApiKeyInput: Ключ не знайдено');
     }
   }, [onApiKeySet]);
   
   const validateApiKey = async (key: string) => {
     try {
+      console.log('SunoApiKeyInput: Починаємо валідацію ключа');
       // Простий запит для перевірки валідності ключа через health endpoint
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -49,17 +59,28 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
         signal: controller.signal
       }).finally(() => clearTimeout(timeoutId));
       
+      console.log('SunoApiKeyInput: Отримано відповідь від API:', { 
+        status: response.status, 
+        ok: response.ok 
+      });
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('SunoApiKeyInput: Відповідь API:', data);
+        
         if (data.code === 200) {
+          console.log('SunoApiKeyInput: Ключ валідний');
           return true;
         } else {
+          console.error('SunoApiKeyInput: Невалідний ключ:', data);
           throw new Error(data.msg || 'Невірний API ключ');
         }
       } else {
+        console.error('SunoApiKeyInput: Помилка відповіді API:', response.status, response.statusText);
         throw new Error('Невірний API ключ або проблеми з сервером');
       }
     } catch (error: any) {
+      console.error('SunoApiKeyInput: Помилка валідації ключа:', error);
       if (error.name === 'AbortError') {
         throw new Error('Timeout при перевірці ключа');
       } else if (error.message === 'Failed to fetch') {
@@ -78,11 +99,13 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     setError(null);
     
     try {
+      console.log('SunoApiKeyInput: Спроба збереження ключа');
       // Спробуємо перевірити ключ перед збереженням
       await validateApiKey(apiKey.trim());
       
       // Якщо перевірка пройшла успішно, зберігаємо ключ
       localStorage.setItem('suno_api_key', apiKey.trim());
+      console.log('SunoApiKeyInput: Ключ успішно збережено');
       onApiKeySet();
       
       toast({
@@ -90,6 +113,7 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
         description: "API ключ збережено",
       });
     } catch (err: any) {
+      console.error('SunoApiKeyInput: Помилка збереження ключа:', err);
       setError(err.message || "Помилка при збереженні ключа");
       toast({
         title: "Помилка",
