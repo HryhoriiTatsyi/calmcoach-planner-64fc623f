@@ -47,7 +47,7 @@ export const generateMentalHealthTest = async (answers: { [key: number]: number 
       role: 'system',
       content: `Ви консультант з ментального здоров'я, який аналізує відповіді на тест. 
       Створіть детальний аналіз поточного стану та бажаного стану людини у таких категоріях: емоційний, ментальний, кар'єрний, стосунки, фізичний. 
-      Відповідь має бути строго у такому форматі JSON:
+      Відповідь має бути строго у форматі об'єкта JSON з наступними полями:
       {
         "currentState": {
           "emotional": "string",
@@ -63,7 +63,8 @@ export const generateMentalHealthTest = async (answers: { [key: number]: number 
           "relationships": "string",
           "physical": "string"
         }
-      }`
+      }
+      Не додавайте жодних пояснень або додаткового тексту поза JSON-структурою. Поверніть лише валідний JSON об'єкт.`
     },
     {
       role: 'user',
@@ -81,9 +82,22 @@ export const generateMentalHealthTest = async (answers: { [key: number]: number 
     });
 
     try {
-      return JSON.parse(result);
+      // Додаємо додаткову обробку для видалення будь-яких додаткових символів навколо JSON
+      const cleanedResult = result.trim().replace(/^```json/, '').replace(/```$/, '');
+      return JSON.parse(cleanedResult);
     } catch (error) {
       console.error('Помилка парсингу JSON відповіді:', result);
+      
+      // Спроба знайти JSON в тексті за допомогою регулярного виразу
+      try {
+        const jsonMatch = result.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (innerError) {
+        console.error('Не вдалося знайти JSON у відповіді:', innerError);
+      }
+      
       throw new Error('Помилка при обробці відповіді від AI. Будь ласка, спробуйте ще раз.');
     }
   } catch (error) {
@@ -98,7 +112,7 @@ export const generateActionPlan = async (currentState: any, desiredState: any) =
       role: 'system',
       content: `Ви професійний коуч Вікторія, яка спеціалізується на створенні персоналізованих планів дій для клієнтів. 
       На основі поточного та бажаного стану клієнта, створіть детальний план дій. 
-      План має бути наданий строго у такому форматі JSON:
+      План має бути наданий строго у форматі об'єкта JSON з наступними полями:
       {
         "summary": "string",
         "reasoning": "string",
@@ -110,7 +124,8 @@ export const generateActionPlan = async (currentState: any, desiredState: any) =
             "timeframe": "string"
           }
         ]
-      }`
+      }
+      Не додавайте жодних пояснень або додаткового тексту поза JSON-структурою. Поверніть лише валідний JSON об'єкт.`
     },
     {
       role: 'user',
@@ -129,9 +144,22 @@ export const generateActionPlan = async (currentState: any, desiredState: any) =
     });
 
     try {
-      return JSON.parse(result);
+      // Додаємо додаткову обробку для видалення будь-яких додаткових символів навколо JSON
+      const cleanedResult = result.trim().replace(/^```json/, '').replace(/```$/, '');
+      return JSON.parse(cleanedResult);
     } catch (error) {
       console.error('Помилка парсингу JSON відповіді:', result);
+      
+      // Спроба знайти JSON в тексті за допомогою регулярного виразу
+      try {
+        const jsonMatch = result.match(/{[\s\S]*}/);
+        if (jsonMatch) {
+          return JSON.parse(jsonMatch[0]);
+        }
+      } catch (innerError) {
+        console.error('Не вдалося знайти JSON у відповіді:', innerError);
+      }
+      
       throw new Error('Помилка при обробці відповіді від AI. Будь ласка, спробуйте ще раз.');
     }
   } catch (error) {
