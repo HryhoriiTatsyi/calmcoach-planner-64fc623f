@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,33 +71,55 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     setError(null);
     
     try {
-      const response = await fetch('https://api.suno.ai/v1/generations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('suno_api_key')}`
-        },
-        body: JSON.stringify({
-          prompt: songLyrics.lyrics,
-          title: songLyrics.title,
-          style_preset: "pop_happy_cheerful_upbeat",
-          language: "ukrainian"
-        })
-      });
+      const sunoApiKey = localStorage.getItem('suno_api_key');
       
-      if (!response.ok) {
-        throw new Error('Не вдалося згенерувати аудіо через Suno API');
+      if (!sunoApiKey) {
+        throw new Error('API ключ Suno не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
       }
       
-      const data = await response.json();
-      if (data.audio_url) {
-        setAudioUrl(data.audio_url);
+      // Використовуємо AbortController для таймауту запиту
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+      
+      try {
+        const response = await fetch('https://api.suno.ai/v1/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sunoApiKey}`
+          },
+          body: JSON.stringify({
+            prompt: songLyrics.lyrics,
+            title: songLyrics.title,
+            style_preset: "pop_happy_cheerful_upbeat",
+            language: "ukrainian"
+          }),
+          signal: controller.signal
+        }).finally(() => clearTimeout(timeoutId));
         
-        const newAudio = new Audio(data.audio_url);
-        newAudio.addEventListener('ended', () => setIsPlaying(false));
-        setAudio(newAudio);
-      } else {
-        throw new Error('Відповідь API не містить URL аудіо');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+          throw new Error(`Помилка Suno API: ${errorData.error?.message || response.statusText}`);
+        }
+        
+        const data = await response.json();
+        if (data.audio_url) {
+          setAudioUrl(data.audio_url);
+          
+          const newAudio = new Audio(data.audio_url);
+          newAudio.addEventListener('ended', () => setIsPlaying(false));
+          setAudio(newAudio);
+        } else {
+          throw new Error('Відповідь API не містить URL аудіо');
+        }
+      } catch (fetchError: any) {
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Запит до Suno API перевищив час очікування. Будь ласка, спробуйте ще раз.');
+        } else if (fetchError.message === 'Failed to fetch') {
+          throw new Error('Неможливо з\'єднатися з API Suno. Перевірте своє інтернет-з\'єднання, коректність API ключа або спробуйте пізніше.');
+        } else {
+          throw fetchError;
+        }
       }
     } catch (err: any) {
       setError(err.message || "Не вдалося згенерувати аудіо пісні");

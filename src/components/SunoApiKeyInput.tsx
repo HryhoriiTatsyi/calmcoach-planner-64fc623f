@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { KeyRound, Music } from 'lucide-react';
+import { KeyRound, Music, AlertCircle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface SunoApiKeyInputProps {
   onApiKeySet: () => void;
@@ -13,6 +14,9 @@ interface SunoApiKeyInputProps {
 
 const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
   const [apiKey, setApiKey] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   useEffect(() => {
     // Перевіряємо наявність ключа при завантаженні компонента
@@ -22,12 +26,63 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     }
   }, []);
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateApiKey = async (key: string) => {
+    try {
+      // Простий запит для перевірки валідності ключа
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch('https://api.suno.ai/v1/health', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${key}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
+      
+      if (response.ok) {
+        return true;
+      } else {
+        const errorData = await response.json().catch(() => ({ error: { message: 'Невідома помилка' } }));
+        throw new Error(errorData.error?.message || 'Невірний API ключ');
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('Timeout при перевірці ключа');
+      } else if (error.message === 'Failed to fetch') {
+        throw new Error('Неможливо з\'єднатися з API Suno. Перевірте своє інтернет-з\'єднання або спробуйте пізніше.');
+      }
+      throw error;
+    }
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (apiKey.trim()) {
+    if (!apiKey.trim()) return;
+    
+    setIsValidating(true);
+    setError(null);
+    
+    try {
+      // Зберігаємо ключ навіть якщо не можемо його перевірити (на випадок проблем з API)
       localStorage.setItem('suno_api_key', apiKey.trim());
       onApiKeySet();
+      
+      toast({
+        title: "Успішно",
+        description: "API ключ Suno збережено",
+      });
+    } catch (err: any) {
+      setError(err.message || "Помилка при збереженні ключа");
+      toast({
+        title: "Помилка",
+        description: err.message || "Помилка при збереженні ключа",
+        variant: "destructive",
+      });
+    } finally {
+      setIsValidating(false);
     }
   };
   
@@ -45,6 +100,13 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       
       <form onSubmit={handleSubmit}>
         <CardContent className="p-6 space-y-6">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
           <Alert className="bg-calm-50">
             <KeyRound className="h-4 w-4" />
             <AlertDescription>
@@ -71,9 +133,15 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
         <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-end">
           <Button 
             type="submit"
-            disabled={!apiKey.trim()}
+            disabled={!apiKey.trim() || isValidating}
           >
-            Зберегти ключ
+            {isValidating ? (
+              <>
+                Перевіряємо ключ...
+              </>
+            ) : (
+              'Зберегти ключ'
+            )}
           </Button>
         </CardFooter>
       </form>
