@@ -37,6 +37,19 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     } else if (storedKey) {
       console.log('SunoApiKeyInput: Знайдено збережений ключ у localStorage');
       setApiKey(storedKey);
+      // Перевіряємо валідність збереженого ключа
+      validateApiKey(storedKey)
+        .then(isValid => {
+          if (isValid) {
+            console.log('SunoApiKeyInput: Збережений ключ валідний, переходимо далі');
+            onApiKeySet();
+          } else {
+            console.log('SunoApiKeyInput: Збережений ключ невалідний');
+          }
+        })
+        .catch(err => {
+          console.error('SunoApiKeyInput: Помилка перевірки збереженого ключа:', err);
+        });
     } else {
       console.log('SunoApiKeyInput: Ключ не знайдено');
     }

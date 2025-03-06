@@ -25,13 +25,15 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
       // Якщо ключ є в змінних середовища, автоматично переходимо далі
       console.log('ApiKeyInput: Знайдено ключ у змінних середовища');
       localStorage.setItem('openai_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
+      setApiKey(envApiKey);
+      setIsSaved(true);
       onApiKeySet();
-      return;
     } else if (savedKey) {
       // Якщо ключа немає в env, але є в localStorage
       console.log('ApiKeyInput: Знайдено збережений ключ у localStorage');
       setApiKey(savedKey);
       setIsSaved(true);
+      onApiKeySet();
     } else {
       console.log('ApiKeyInput: Ключ не знайдено');
     }

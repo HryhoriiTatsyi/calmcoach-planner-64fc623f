@@ -375,12 +375,45 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const downloadAudio = () => {
     if (!audioUrl) return;
     
-    const a = document.createElement('a');
-    a.href = audioUrl;
-    a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', audioUrl, true);
+    xhr.responseType = 'blob';
+    
+    xhr.onload = function() {
+      if (this.status === 200) {
+        const blob = new Blob([this.response], { type: 'audio/mpeg' });
+        const blobUrl = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }, 100);
+      } else {
+        console.error('Помилка завантаження файлу:', this.status);
+        toast({
+          title: "Помилка завантаження",
+          description: "Не вдалося завантажити аудіофайл",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    xhr.onerror = function() {
+      console.error('Помилка мережі при завантаженні файлу');
+      toast({
+        title: "Помилка мережі",
+        description: "Не вдалося завантажити аудіофайл через помилку мережі",
+        variant: "destructive",
+      });
+    };
+    
+    xhr.send();
   };
 
   const formatLyrics = (lyrics: string) => {

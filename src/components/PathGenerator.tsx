@@ -296,11 +296,20 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
   };
   
   const generateAudio = async (songData: { title: string, lyrics: string }) => {
+    const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
+    if (envApiKey) {
+      console.log('Використовуємо ключ Suno API з ENV змінних');
+      localStorage.setItem('suno_api_key', envApiKey);
+    }
+    
     const sunoApiKey = localStorage.getItem('suno_api_key');
     
     if (!sunoApiKey) {
+      console.error('Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
       throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
     }
+    
+    console.log('Знайдено Suno API ключ, починаємо генерацію аудіо');
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -492,12 +501,26 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
   };
   
   const handleManualCheckStatus = async () => {
+    const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
+    if (envApiKey) {
+      console.log('Використовуємо ключ Suno API з ENV змінних для перевірки статусу');
+      localStorage.setItem('suno_api_key', envApiKey);
+    }
+    
+    const sunoApiKey = localStorage.getItem('suno_api_key');
+    
     if (!taskId) return;
     
     try {
-      const sunoApiKey = localStorage.getItem('suno_api_key');
-      
-      if (!sunoApiKey) return;
+      if (!sunoApiKey) {
+        console.error('Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
+        toast({
+          title: "Помилка",
+          description: "API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
         method: 'GET',
