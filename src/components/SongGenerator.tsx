@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,7 +58,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
 
   useEffect(() => {
     return () => {
-      // Очищення ресурсів при розмонтуванні компонента
       if (audio) {
         audio.pause();
         audio.src = '';
@@ -122,9 +120,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         throw new Error(`Помилка API: ${data.msg}`);
       }
       
-      // Перевіряємо статус завдання
       if (data.data?.status === 'SUCCESS' && data.data.response?.sunoData && data.data.response.sunoData.length > 0) {
-        // Завдання успішно виконано, знаходимо URL аудіо
         const audioData = data.data.response.sunoData[0];
         const url = audioData.audioUrl || audioData.streamAudioUrl;
         
@@ -134,7 +130,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           newAudio.addEventListener('ended', () => setIsPlaying(false));
           setAudio(newAudio);
           
-          // Очищаємо інтервал опитування
           if (pollingInterval) {
             clearInterval(pollingInterval);
             setPollingInterval(null);
@@ -151,10 +146,8 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       } else if (data.data?.status === 'PENDING' || 
                 data.data?.status === 'TEXT_SUCCESS' || 
                 data.data?.status === 'FIRST_SUCCESS') {
-        // Завдання ще в процесі, продовжуємо опитування
         console.log(`Завдання в процесі виконання, статус: ${data.data.status}`);
       } else if (data.data?.errorMessage) {
-        // Завдання завершилося з помилкою
         throw new Error(`Помилка при генерації аудіо: ${data.data.errorMessage}`);
       } else if (data.data?.status === 'CREATE_TASK_FAILED' || 
                 data.data?.status === 'GENERATE_AUDIO_FAILED' || 
@@ -193,12 +186,10 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
       }
       
-      // Використовуємо AbortController для таймауту запиту
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       
       try {
-        // Використовуємо API endpoint і формат запиту згідно з документацією
         const response = await fetch('https://apibox.erweima.ai/api/v1/generate', {
           method: 'POST',
           headers: {
@@ -211,9 +202,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
             style: "Pop",
             title: songLyrics.title,
             customMode: true,
-            instrumental: false, // Створюємо пісню з вокалом
+            instrumental: false,
             model: "V4",
-            callBackUrl: ""  // Виправляємо порожній рядок на дійсне значення
+            callBackUrl: "https://no-callback.com"
           }),
           signal: controller.signal
         }).finally(() => clearTimeout(timeoutId));
@@ -229,17 +220,14 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           throw new Error(`Помилка API: ${data.msg || 'Невідома помилка'}`);
         }
         
-        // Зберігаємо taskId для подальшого опитування статусу
         setTaskId(data.data.taskId);
         
-        // Починаємо опитування статусу завдання кожні 5 секунд
         const interval = window.setInterval(() => {
           checkTaskStatus(data.data.taskId);
         }, 5000);
         
         setPollingInterval(interval);
         
-        // Перше опитування статусу
         checkTaskStatus(data.data.taskId);
         
         toast({
