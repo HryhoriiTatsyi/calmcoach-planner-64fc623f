@@ -15,94 +15,94 @@ interface ResourceItem {
 const resourcesData: Record<string, ResourceItem[]> = {
   meditation: [
     {
-      title: "Morning Mindfulness",
-      description: "Start your day with a 10-minute guided meditation for focus and clarity",
-      type: "Audio",
-      duration: "10 min",
-      link: "#"
+      title: "Ранкова усвідомленість",
+      description: "Почніть свій день з 10-хвилинної керованої медитації для фокусу та ясності",
+      type: "Аудіо",
+      duration: "10 хв",
+      link: "https://www.youtube.com/watch?v=SEfs5TJZ6Nk"
     },
     {
-      title: "Stress Relief Breathing",
-      description: "Simple breathing techniques to calm your nervous system during stressful moments",
-      type: "Video",
-      duration: "8 min",
-      link: "#"
+      title: "Дихальні техніки для зняття стресу",
+      description: "Прості дихальні техніки для заспокоєння вашої нервової системи в моменти стресу",
+      type: "Відео",
+      duration: "8 хв",
+      link: "https://www.youtube.com/watch?v=rJNwDu0AK6c"
     },
     {
-      title: "Body Scan Relaxation",
-      description: "Deep relaxation practice to release tension and connect with your body",
-      type: "Audio",
-      duration: "20 min",
-      link: "#"
+      title: "Сканування тіла для розслаблення",
+      description: "Глибока практика релаксації для зняття напруги та з'єднання з вашим тілом",
+      type: "Аудіо",
+      duration: "20 хв",
+      link: "https://www.youtube.com/watch?v=RlX0vzDUoLs"
     },
     {
-      title: "Loving-Kindness Meditation",
-      description: "Cultivate compassion for yourself and others with this heart-centered practice",
-      type: "Audio",
-      duration: "15 min",
-      link: "#"
+      title: "Медитація люблячої доброти",
+      description: "Розвивайте співчуття до себе та інших з цією практикою, орієнтованою на серце",
+      type: "Аудіо",
+      duration: "15 хв",
+      link: "https://www.youtube.com/watch?v=AgvJRMYDQdw"
     }
   ],
   morning: [
     {
-      title: "Energizing Morning Routine",
-      description: "A step-by-step morning routine to boost energy and set a positive tone for the day",
-      type: "Article",
-      link: "#"
+      title: "Енергізуюча ранкова рутина",
+      description: "Покрокова ранкова рутина для підвищення енергії та створення позитивного настрою на день",
+      type: "Стаття",
+      link: "https://www.thelifehub.com.ua/5-krashchyh-rankovyh-zvychok/"
     },
     {
-      title: "Journal Prompts for Clarity",
-      description: "Five powerful questions to reflect on each morning for greater purpose and focus",
-      type: "Text",
-      link: "#"
+      title: "Запитання для щоденника ясності",
+      description: "П'ять потужних запитань для роздумів щоранку для більшої мети та фокусу",
+      type: "Текст",
+      link: "https://www.thelifehub.com.ua/rankovyj-ritual-zapysy-v-shchodennyk/"
     },
     {
-      title: "5-Minute Morning Movement",
-      description: "Quick, gentle movements to wake up your body and energize your mind",
-      type: "Video",
-      duration: "5 min",
-      link: "#"
+      title: "5-хвилинний ранковий рух",
+      description: "Швидкі, м'які рухи, щоб розбудити ваше тіло та енергізувати розум",
+      type: "Відео",
+      duration: "5 хв",
+      link: "https://www.youtube.com/watch?v=3e09e8qJmXg"
     }
   ],
   evening: [
     {
-      title: "Digital Sunset Protocol",
-      description: "A structured approach to winding down from technology for better sleep",
-      type: "Article",
-      link: "#"
+      title: "Протокол цифрового заходу сонця",
+      description: "Структурований підхід до відключення від технологій для кращого сну",
+      type: "Стаття",
+      link: "https://shotam.info/yak-pozbutysia-tsilodobovoi-pov-iazanosti-z-telefonom-poiasniuie-psykholoh/"
     },
     {
-      title: "Gratitude Practice",
-      description: "Simple evening ritual to cultivate appreciation and positive reflection",
-      type: "Text",
-      link: "#"
+      title: "Практика вдячності",
+      description: "Простий вечірній ритуал для культивування вдячності та позитивних роздумів",
+      type: "Текст",
+      link: "https://www.thelifehub.com.ua/shchodennyk-vdjachnosti-shho-cze-take-ta-jak-vesty/"
     },
     {
-      title: "Sleep Preparation Meditation",
-      description: "Gentle guided meditation to prepare your mind and body for restorative sleep",
-      type: "Audio",
-      duration: "12 min",
-      link: "#"
+      title: "Медитація підготовки до сну",
+      description: "М'яка керована медитація для підготовки вашого розуму та тіла до відновлюючого сну",
+      type: "Аудіо",
+      duration: "12 хв",
+      link: "https://www.youtube.com/watch?v=Evss8Xhv4Hs"
     }
   ],
   nutrition: [
     {
-      title: "Mindful Eating Guide",
-      description: "Learn to develop a healthier relationship with food through mindful eating practices",
-      type: "Article",
-      link: "#"
+      title: "Посібник з усвідомленого харчування",
+      description: "Навчіться розвивати здоровіші стосунки з їжею через практики усвідомленого харчування",
+      type: "Стаття",
+      link: "https://suspilne.media/195297-svidomne-harcuvanna-so-take-mindful-eating-i-ak-jogo-praktikuvati/"
     },
     {
-      title: "Energy-Boosting Meal Ideas",
-      description: "Simple, nutritious meal suggestions to support mental clarity and sustained energy",
-      type: "Text",
-      link: "#"
+      title: "Ідеї енергетичних прийомів їжі",
+      description: "Прості, поживні пропозиції щодо прийомів їжі для підтримки ментальної ясності та стійкої енергії",
+      type: "Текст",
+      link: "https://life.pravda.com.ua/health/2021/01/14/243659/"
     },
     {
-      title: "Hydration Tracker Template",
-      description: "A downloadable template to help you maintain optimal hydration throughout the day",
-      type: "Download",
-      link: "#"
+      title: "Шаблон відстеження гідратації",
+      description: "Завантажуваний шаблон, щоб допомогти вам підтримувати оптимальну гідратацію протягом дня",
+      type: "Завантаження",
+      link: "https://drive.google.com/file/d/1VrPXj-GZJB7pKnDw-b-_8EIKxjdlAMGE/view?usp=sharing"
     }
   ]
 };
@@ -113,29 +113,29 @@ const Resources = () => {
       <div className="section-container">
         <div className="text-center max-w-3xl mx-auto mb-16">
           <span className="inline-block px-4 py-2 rounded-full bg-calm-100 text-calm-800 text-sm font-medium mb-4">
-            Wellness Resources
+            Ресурси для благополуччя
           </span>
           <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">
-            Tools for Daily Practice
+            Інструменти для щоденної практики
           </h2>
           <p className="text-lg text-muted-foreground">
-            Explore our curated collection of meditation guides, routines, and wellness practices to support your transformation journey.
+            Досліджуйте нашу ретельно підібрану колекцію посібників з медитації, рутин і практик для благополуччя, щоб підтримати ваш шлях трансформації.
           </p>
         </div>
         
         <Tabs defaultValue="meditation" className="w-full">
           <TabsList className="w-full max-w-2xl mx-auto grid grid-cols-2 md:grid-cols-4 mb-12">
             <TabsTrigger value="meditation" className="data-[state=active]:bg-calm-100 data-[state=active]:text-calm-800">
-              <Heart size={16} className="mr-2" /> Meditation
+              <Heart size={16} className="mr-2" /> Медитація
             </TabsTrigger>
             <TabsTrigger value="morning" className="data-[state=active]:bg-calm-100 data-[state=active]:text-calm-800">
-              <Coffee size={16} className="mr-2" /> Morning Routines
+              <Coffee size={16} className="mr-2" /> Ранкові рутини
             </TabsTrigger>
             <TabsTrigger value="evening" className="data-[state=active]:bg-calm-100 data-[state=active]:text-calm-800">
-              <Moon size={16} className="mr-2" /> Evening Rituals
+              <Moon size={16} className="mr-2" /> Вечірні ритуали
             </TabsTrigger>
             <TabsTrigger value="nutrition" className="data-[state=active]:bg-calm-100 data-[state=active]:text-calm-800">
-              <Leaf size={16} className="mr-2" /> Nutrition
+              <Leaf size={16} className="mr-2" /> Харчування
             </TabsTrigger>
           </TabsList>
           
@@ -156,7 +156,7 @@ const Resources = () => {
                     </CardContent>
                     <CardFooter>
                       <Button variant="outline" size="sm" className="w-full" asChild>
-                        <a href={item.link}>View Resource</a>
+                        <a href={item.link} target="_blank" rel="noopener noreferrer">Переглянути ресурс</a>
                       </Button>
                     </CardFooter>
                   </Card>

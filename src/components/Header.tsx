@@ -22,22 +22,22 @@ const Header = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <a href="#" className="text-2xl font-medium text-foreground">
-              CalmCoach
+              Коучинг з Вікторією
             </a>
           </div>
           
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#coaching" className="text-foreground/80 hover:text-foreground transition-colors">
-              Coaching
+              Коучинг
             </a>
             <a href="#resources" className="text-foreground/80 hover:text-foreground transition-colors">
-              Resources
+              Ресурси
             </a>
             <a href="#consultation" className="text-foreground/80 hover:text-foreground transition-colors">
-              Consultation
+              Консультація
             </a>
             <Button variant="default" size="sm" className="ml-4">
-              Get Started
+              Почати
             </Button>
           </nav>
           
@@ -55,16 +55,16 @@ const Header = () => {
         <div className="block md:hidden bg-background absolute top-full left-0 right-0 shadow-lg animate-fade-in">
           <div className="px-4 py-6 space-y-4">
             <a href="#coaching" className="block py-2 text-foreground/80 hover:text-foreground transition-colors">
-              Coaching
+              Коучинг
             </a>
             <a href="#resources" className="block py-2 text-foreground/80 hover:text-foreground transition-colors">
-              Resources
+              Ресурси
             </a>
             <a href="#consultation" className="block py-2 text-foreground/80 hover:text-foreground transition-colors">
-              Consultation
+              Консультація
             </a>
             <Button variant="default" size="default" className="w-full mt-4">
-              Get Started
+              Почати
             </Button>
           </div>
         </div>

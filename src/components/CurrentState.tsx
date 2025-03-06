@@ -28,37 +28,37 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
   return (
     <Card className="w-full border-calm-100 shadow-sm overflow-hidden">
       <CardHeader className="bg-calm-50 border-b border-calm-100">
-        <CardTitle className="text-xl font-medium">Current State (Point A)</CardTitle>
+        <CardTitle className="text-xl font-medium">Поточний стан (Точка А)</CardTitle>
         <CardDescription>
-          Describe your current situation in different areas of your life
+          Опишіть вашу поточну ситуацію в різних сферах життя
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <Tabs defaultValue="emotional" className="w-full">
           <TabsList className="w-full justify-start p-0 rounded-none bg-calm-50/50 border-b border-calm-100">
             <TabsTrigger value="emotional" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Heart size={16} className="mr-2" /> Emotional
+              <Heart size={16} className="mr-2" /> Емоційний
             </TabsTrigger>
             <TabsTrigger value="mental" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Brain size={16} className="mr-2" /> Mental
+              <Brain size={16} className="mr-2" /> Ментальний
             </TabsTrigger>
             <TabsTrigger value="career" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Briefcase size={16} className="mr-2" /> Career
+              <Briefcase size={16} className="mr-2" /> Кар'єрний
             </TabsTrigger>
             <TabsTrigger value="relationships" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Users size={16} className="mr-2" /> Relationships
+              <Users size={16} className="mr-2" /> Стосунки
             </TabsTrigger>
             <TabsTrigger value="physical" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Activity size={16} className="mr-2" /> Physical
+              <Activity size={16} className="mr-2" /> Фізичний
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="emotional" className="p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
-              <Label htmlFor="emotional-state">How are you feeling emotionally?</Label>
+              <Label htmlFor="emotional-state">Як ви почуваєтеся емоційно?</Label>
               <Textarea 
                 id="emotional-state" 
-                placeholder="Describe your current emotional state, feelings, and overall mood..."
+                placeholder="Опишіть ваш поточний емоційний стан, почуття та загальний настрій..."
                 value={data.emotional}
                 onChange={(e) => handleChange('emotional', e.target.value)}
                 className="min-h-[120px]"
@@ -68,10 +68,10 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
           
           <TabsContent value="mental" className="p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
-              <Label htmlFor="mental-state">How is your mental state?</Label>
+              <Label htmlFor="mental-state">Який ваш ментальний стан?</Label>
               <Textarea 
                 id="mental-state" 
-                placeholder="Describe your current mental state, thought patterns, focus, and clarity..."
+                placeholder="Опишіть ваш поточний ментальний стан, схеми мислення, фокус та ясність..."
                 value={data.mental}
                 onChange={(e) => handleChange('mental', e.target.value)}
                 className="min-h-[120px]"
@@ -81,10 +81,10 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
           
           <TabsContent value="career" className="p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
-              <Label htmlFor="career-state">How is your career or professional life?</Label>
+              <Label htmlFor="career-state">Як ваша кар'єра чи професійне життя?</Label>
               <Textarea 
                 id="career-state" 
-                placeholder="Describe your current career situation, job satisfaction, goals, and challenges..."
+                placeholder="Опишіть вашу поточну кар'єрну ситуацію, задоволення роботою, цілі та виклики..."
                 value={data.career}
                 onChange={(e) => handleChange('career', e.target.value)}
                 className="min-h-[120px]"
@@ -94,10 +94,10 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
           
           <TabsContent value="relationships" className="p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
-              <Label htmlFor="relationships-state">How are your relationships?</Label>
+              <Label htmlFor="relationships-state">Як ваші стосунки?</Label>
               <Textarea 
                 id="relationships-state" 
-                placeholder="Describe your current relationships with family, friends, colleagues, and romantic partners..."
+                placeholder="Опишіть ваші поточні стосунки з сім'єю, друзями, колегами та романтичними партнерами..."
                 value={data.relationships}
                 onChange={(e) => handleChange('relationships', e.target.value)}
                 className="min-h-[120px]"
@@ -107,10 +107,10 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
           
           <TabsContent value="physical" className="p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
-              <Label htmlFor="physical-state">How is your physical health?</Label>
+              <Label htmlFor="physical-state">Як ваше фізичне здоров'я?</Label>
               <Textarea 
                 id="physical-state" 
-                placeholder="Describe your current physical health, energy levels, exercise habits, and overall wellbeing..."
+                placeholder="Опишіть ваше поточне фізичне здоров'я, рівень енергії, звички щодо фізичних вправ та загальне самопочуття..."
                 value={data.physical}
                 onChange={(e) => handleChange('physical', e.target.value)}
                 className="min-h-[120px]"
@@ -120,10 +120,10 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
           
           <div className="p-6 border-t border-calm-100">
             <div className="space-y-4">
-              <Label htmlFor="needs" className="font-medium">What specific needs or issues would you like to address?</Label>
+              <Label htmlFor="needs" className="font-medium">Які конкретні потреби чи проблеми ви хотіли б вирішити?</Label>
               <Textarea 
                 id="needs" 
-                placeholder="Describe the specific needs or issues you want to solve through coaching..."
+                placeholder="Опишіть конкретні потреби або проблеми, які ви хочете вирішити за допомогою коучингу..."
                 value={data.needsToSolve}
                 onChange={(e) => handleChange('needsToSolve', e.target.value)}
                 className="min-h-[120px]"

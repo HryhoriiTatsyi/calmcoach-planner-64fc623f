@@ -11,7 +11,7 @@ const Index = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   
   useEffect(() => {
-    // Simulate page loading
+    // Симуляція завантаження сторінки
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 300);

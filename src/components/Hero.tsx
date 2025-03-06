@@ -13,32 +13,32 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="animate-fade-in-up">
           <span className="inline-block px-4 py-2 rounded-full bg-calm-100 text-calm-800 text-sm font-medium mb-8">
-            Transform your life with strategic coaching
+            Трансформуйте своє життя за допомогою стратегічного коучингу
           </span>
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight text-foreground mb-6">
-            Plan your journey from <br />
-            <span className="text-primary">where you are</span> to <br />
-            <span className="text-primary">where you want to be</span>
+            Сплануйте свій шлях від <br />
+            <span className="text-primary">того, де ви зараз</span> до <br />
+            <span className="text-primary">того, де хочете бути</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12">
-            A minimalist, AI-powered coaching planner to help you create meaningful change in your life with clarity and purpose
+            Мінімалістичний коучинг-планер, який допоможе вам створити значущі зміни у вашому житті з ясністю та метою
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="rounded-full min-w-[180px]">
-              Start Your Journey
+            <Button size="lg" className="rounded-full min-w-[180px]" onClick={() => document.getElementById('coaching')?.scrollIntoView({ behavior: 'smooth' })}>
+              Почати шлях
             </Button>
-            <Button variant="outline" size="lg" className="rounded-full min-w-[180px]">
-              Learn More
+            <Button variant="outline" size="lg" className="rounded-full min-w-[180px]" onClick={() => document.getElementById('resources')?.scrollIntoView({ behavior: 'smooth' })}>
+              Дізнатися більше
             </Button>
           </div>
         </div>
         
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-pulse-soft">
           <a href="#coaching" className="flex flex-col items-center text-muted-foreground hover:text-foreground transition-colors">
-            <span className="mb-2">Explore</span>
+            <span className="mb-2">Дослідити</span>
             <ArrowDown size={20} />
           </a>
         </div>

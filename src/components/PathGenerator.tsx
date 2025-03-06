@@ -33,53 +33,53 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
   const handleGeneratePlan = () => {
     setIsGenerating(true);
     
-    // Simulate API call to OpenAI
+    // Симуляція виклику API
     setTimeout(() => {
-      // Mock response from AI
+      // Відповідь від Вікторії
       const mockPlan: GeneratedPlan = {
-        summary: "This personalized plan focuses on improving emotional resilience while advancing career goals and enhancing relationships. Each step builds on the previous one to create sustainable change.",
-        reasoning: "Based on your input, I've identified that emotional wellbeing is foundational to your goals. The plan starts with daily mindfulness to build self-awareness, followed by relationship-building activities, and finally career development. This sequence allows each area to reinforce the others.",
-        timeframe: "3 months",
+        summary: "Цей персоналізований план фокусується на покращенні емоційної стійкості, досягненні кар'єрних цілей та поліпшенні стосунків. Кожен крок базується на попередньому, створюючи стійкі зміни.",
+        reasoning: "На основі вашої інформації, я визначила, що емоційне благополуччя є основою для ваших цілей. План починається з щоденної усвідомленості для розвитку самосвідомості, продовжується діяльністю з розбудови відносин і завершується професійним розвитком. Така послідовність дозволяє кожній сфері підсилювати інші.",
+        timeframe: "3 місяці",
         steps: [
           {
-            title: "Daily Mindfulness Practice",
-            description: "Begin with 10 minutes of daily meditation in the morning to create emotional awareness and stability. Use apps like Headspace or Calm to guide you.",
-            timeframe: "Weeks 1-2"
+            title: "Щоденна практика усвідомленості",
+            description: "Почніть з 10-хвилинної щоденної медитації вранці для створення емоційної свідомості та стабільності. Використовуйте додатки, як Headspace або Calm для керівництва.",
+            timeframe: "Тижні 1-2"
           },
           {
-            title: "Emotion Journal",
-            description: "Keep a daily emotion journal to track patterns and triggers. Write three positive experiences each day to build gratitude practice.",
-            timeframe: "Weeks 1-4"
+            title: "Емоційний щоденник",
+            description: "Ведіть щоденний емоційний щоденник для відстеження моделей та тригерів. Записуйте три позитивні переживання щодня для розвитку практики вдячності.",
+            timeframe: "Тижні 1-4"
           },
           {
-            title: "Weekly Exercise Routine",
-            description: "Establish a consistent exercise routine with 3 cardio sessions and 2 strength training sessions per week to improve physical wellbeing and reduce stress.",
-            timeframe: "Weeks 2-12"
+            title: "Щотижневий розклад вправ",
+            description: "Встановіть постійний розклад вправ з 3 кардіо-сесіями та 2 тренуваннями силових вправ на тиждень для покращення фізичного самопочуття та зменшення стресу.",
+            timeframe: "Тижні 2-12"
           },
           {
-            title: "Professional Skill Development",
-            description: "Identify one key professional skill to develop. Spend 3 hours weekly on coursework or practice to enhance career prospects.",
-            timeframe: "Weeks 3-10"
+            title: "Розвиток професійних навичок",
+            description: "Визначте одну ключову професійну навичку для розвитку. Витрачайте 3 години на тиждень на курси або практику для покращення кар'єрних перспектив.",
+            timeframe: "Тижні 3-10"
           },
           {
-            title: "Relationship Building",
-            description: "Schedule one meaningful conversation with a friend or family member each week. Practice active listening and vulnerability.",
-            timeframe: "Weeks 3-12"
+            title: "Розбудова стосунків",
+            description: "Заплануйте одну змістовну розмову з другом або членом сім'ї щотижня. Практикуйте активне слухання та вразливість.",
+            timeframe: "Тижні 3-12"
           },
           {
-            title: "Digital Detox Evenings",
-            description: "Implement technology-free evenings twice weekly to improve mental clarity and be present with loved ones.",
-            timeframe: "Weeks 4-12"
+            title: "Вечори цифрової детоксикації",
+            description: "Впровадьте вечори без технологій двічі на тиждень для покращення ясності розуму та присутності з близькими.",
+            timeframe: "Тижні 4-12"
           },
           {
-            title: "Career Vision Board",
-            description: "Create a visual representation of your ideal career. Review weekly and adjust your actions accordingly.",
-            timeframe: "Week 5"
+            title: "Візуальна дошка кар'єри",
+            description: "Створіть візуальне представлення вашої ідеальної кар'єри. Переглядайте щотижня та коригуйте свої дії відповідним чином.",
+            timeframe: "Тиждень 5"
           },
           {
-            title: "Weekly Review & Adjustment",
-            description: "Set aside 30 minutes each Sunday to review progress, celebrate wins, and adjust the coming week's activities as needed.",
-            timeframe: "Weeks 1-12"
+            title: "Щотижневий огляд і коригування",
+            description: "Виділіть 30 хвилин щонеділі для огляду прогресу, святкування досягнень та коригування діяльності наступного тижня за потреби.",
+            timeframe: "Тижні 1-12"
           }
         ]
       };
@@ -110,10 +110,10 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
       <CardHeader className="bg-calm-50 border-b border-calm-100">
         <div className="flex items-center gap-2">
           <Sparkles size={20} className="text-primary" />
-          <CardTitle className="text-xl font-medium">AI-Generated Path</CardTitle>
+          <CardTitle className="text-xl font-medium">Персоналізований план від Вікторії</CardTitle>
         </div>
         <CardDescription>
-          Create a personalized action plan to bridge the gap between your current and desired states
+          Отримайте персоналізований план дій для подолання розриву між вашим поточним та бажаним станами
         </CardDescription>
       </CardHeader>
       
@@ -122,10 +122,10 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-6 text-muted-foreground">
               <p className="text-lg mb-4">
-                Our AI will analyze your current and desired states to create a personalized path forward.
+                Вікторія проаналізує ваш поточний та бажаний стани, щоб створити персоналізований шлях вперед.
               </p>
               <p>
-                The plan will include concrete steps, a timeline, and reasoning behind each recommendation.
+                План включатиме конкретні кроки, часові рамки та обґрунтування кожної рекомендації.
               </p>
             </div>
             
@@ -138,43 +138,43 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
               {isGenerating ? (
                 <>
                   <Loader2 size={20} className="mr-2 animate-spin" />
-                  Generating Plan...
+                  Створення плану...
                 </>
               ) : (
                 <>
                   <Sparkles size={20} className="mr-2" />
-                  Generate My Path
+                  Створити мій план
                 </>
               )}
             </Button>
             
             {!areInputsValid() && (
               <p className="text-sm text-muted-foreground mt-4">
-                Please fill in information about your current and desired states to generate a plan.
+                Будь ласка, заповніть інформацію про ваш поточний та бажаний стани, щоб створити план.
               </p>
             )}
           </div>
         ) : (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-medium mb-2">Plan Summary</h3>
+              <h3 className="text-lg font-medium mb-2">Короткий огляд плану</h3>
               <p className="text-muted-foreground">{generatedPlan.summary}</p>
             </div>
             
             <div>
-              <h3 className="text-lg font-medium mb-2">AI Reasoning</h3>
+              <h3 className="text-lg font-medium mb-2">Обґрунтування</h3>
               <p className="text-muted-foreground">{generatedPlan.reasoning}</p>
             </div>
             
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock size={18} />
-              <span>Estimated timeframe: {generatedPlan.timeframe}</span>
+              <span>Орієнтовний термін: {generatedPlan.timeframe}</span>
             </div>
             
             <Separator />
             
             <div>
-              <h3 className="text-lg font-medium mb-4">Action Steps</h3>
+              <h3 className="text-lg font-medium mb-4">Кроки дій</h3>
               <ScrollArea className="h-[400px] pr-4">
                 <div className="space-y-6">
                   {generatedPlan.steps.map((step, index) => (
@@ -205,10 +205,10 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
         <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-between items-center">
           <Button variant="outline" size="sm" className="gap-2">
             <Download size={16} />
-            Download Plan
+            Завантажити план
           </Button>
           <Button size="sm" className="gap-2">
-            Take Action
+            Почати діяти
             <ArrowRight size={16} />
           </Button>
         </CardFooter>
