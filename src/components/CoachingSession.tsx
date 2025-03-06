@@ -8,7 +8,7 @@ import PathGenerator from './PathGenerator';
 import MentalHealthTest from './MentalHealthTest';
 import SongGenerator from './SongGenerator';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, UserRound } from 'lucide-react';
 import { UserInfo } from '../services/openAiService';
 
 const CoachingSession = () => {
@@ -121,6 +121,20 @@ const CoachingSession = () => {
     setUserInfo(info);
     setShowTest(false);
   };
+
+  // Функція для ручного додавання інформації про користувача
+  const handleManualUserInfo = () => {
+    // Створюємо типову інформацію про користувача, якщо її немає
+    if (!userInfo) {
+      const defaultUserInfo: UserInfo = {
+        name: 'Користувач',
+        age: '30',
+        gender: 'не вказано'
+      };
+      setUserInfo(defaultUserInfo);
+      localStorage.setItem('userInfo', JSON.stringify(defaultUserInfo));
+    }
+  };
   
   return (
     <section id="coaching" className="pt-20 pb-20 bg-calm-50/30">
@@ -136,7 +150,7 @@ const CoachingSession = () => {
             Заповніть деталі про ваш поточний стан та бажане майбутнє, і Вікторія створить персоналізований план дій та мотиваційну пісню, щоб допомогти вам подолати цей розрив.
           </p>
           
-          <div className="mt-8">
+          <div className="mt-8 flex flex-wrap gap-3 justify-center">
             <Button 
               variant="outline" 
               onClick={() => setShowTest(true)}
@@ -146,6 +160,16 @@ const CoachingSession = () => {
             >
               <BrainCircuit size={18} />
               Пройти тест ментального здоров'я
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleManualUserInfo}
+              className="gap-2"
+              type="button"
+            >
+              <UserRound size={18} />
+              Заповнити вручну
             </Button>
           </div>
         </div>

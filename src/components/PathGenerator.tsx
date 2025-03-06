@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Clock, Download, Loader2, AlertCircle, Music } from 'lucide-react';
+import { Sparkles, Clock, Download, Loader2, AlertCircle, Music, UserCircle } from 'lucide-react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
 import { generateActionPlan, generateMotivationalSong, UserInfo } from '../services/openAiService';
@@ -13,6 +13,7 @@ import ApiKeyInput from './ApiKeyInput';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import SunoApiKeyInput from './SunoApiKeyInput';
 import { Progress } from '@/components/ui/progress';
+import UserInfoForm from './UserInfoForm';
 
 interface PathGeneratorProps {
   currentState: CurrentStateData;
@@ -97,6 +98,8 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   const [songProgress, setSongProgress] = useState<SongProgress | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [taskId, setTaskId] = useState<string | null>(null);
+  const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const { toast } = useToast();
   
   // Завантаження збереженого стану з localStorage
@@ -400,6 +403,26 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       console.error('Помилка при спробі відправити email:', error);
     }
   };
+
+  // Функція для перевірки заповнення всіх обов'язкових полів
+  const validateInputs = () => {
+    // Перевірка полів поточного стану
+    if (!currentState.emotional) return "Будь ласка, заповніть поле 'Емоційний стан' у Поточному стані";
+    if (!currentState.mental) return "Будь ласка, заповніть поле 'Ментальний стан' у Поточному стані";
+    if (!currentState.career) return "Будь ласка, заповніть поле 'Кар'єрний стан' у Поточному стані";
+    if (!currentState.relationships) return "Будь ласка, заповніть поле 'Стосунки' у Поточному стані";
+    if (!currentState.physical) return "Будь ласка, заповніть поле 'Фізичний стан' у Поточному стані";
+    
+    // Перевірка полів бажаного стану
+    if (!desiredState.emotional) return "Будь ласка, заповніть поле 'Емоційний стан' у Бажаному стані";
+    if (!desiredState.mental) return "Будь ласка, заповніть поле 'Ментальний стан' у Бажаному стані";
+    if (!desiredState.career) return "Будь ласка, заповніть поле 'Кар'єрний стан' у Бажаному стані";
+    if (!desiredState.relationships) return "Будь ласка, заповніть поле 'Стосунки' у Бажаному стані";
+    if (!desiredState.physical) return "Будь ласка, заповніть поле 'Фізичний стан' у Бажаному стані";
+    if (!desiredState.timeframe) return "Будь ласка, заповніть поле 'Часовий діапазон' у Бажаному стані";
+    
+    return null;
+  };
   
   const handleGeneratePlan = async () => {
     if (!apiKeySet) {
@@ -411,15 +434,25 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       return;
     }
 
+    // Перевіряємо, чи є інформація про користувача
     if (!userInfo) {
+      setShowUserInfoForm(true);
+      return;
+    }
+
+    // Валідація всіх полів
+    const validationResult = validateInputs();
+    if (validationResult) {
+      setValidationError(validationResult);
       toast({
-        title: "Персональна інформація відсутня",
-        description: "Будь ласка, пройдіть тест ментального здоров'я щоб внести персональну інформацію",
+        title: "Заповніть всі поля",
+        description: validationResult,
         variant: "destructive",
       });
       return;
     }
     
+    setValidationError(null);
     setIsGenerating(true);
     setError(null);
     
@@ -446,6 +479,15 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     } finally {
       setIsGenerating(false);
     }
+  };
+  
+  const handleUserInfoSubmit = (info: UserInfo) => {
+    setUserInfo(info);
+    setShowUserInfoForm(false);
+    localStorage.setItem('userInfo', JSON.stringify(info));
+    
+    // Після збереження інформації, спробуйте знову згенерувати план
+    handleGeneratePlan();
   };
   
   const downloadPlan = () => {
@@ -479,23 +521,6 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-  
-  const areInputsValid = () => {
-    const currentStateValid = currentState.emotional && 
-                            currentState.mental && 
-                            currentState.career && 
-                            currentState.relationships && 
-                            currentState.physical;
-                            
-    const desiredStateValid = desiredState.emotional && 
-                            desiredState.mental && 
-                            desiredState.career && 
-                            desiredState.relationships && 
-                            desiredState.physical &&
-                            desiredState.timeframe;
-                            
-    return currentStateValid && desiredStateValid && userInfo !== null;
   };
   
   // Кнопка для ручного оновлення статусу пісні
@@ -588,6 +613,24 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     }
   };
   
+  if (showUserInfoForm) {
+    return (
+      <div className="mb-6">
+        <Card className="w-full border-calm-100 shadow-sm">
+          <CardHeader className="bg-calm-50 border-b border-calm-100">
+            <div className="flex items-center gap-2">
+              <UserCircle size={20} className="text-primary" />
+              <CardTitle className="text-xl font-medium">Введіть вашу інформацію</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <UserInfoForm onComplete={handleUserInfoSubmit} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   if (!apiKeySet) {
     return (
       <ApiKeyInput onApiKeySet={() => setApiKeySet(true)} />
@@ -613,6 +656,16 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
             <AlertTitle>Помилка</AlertTitle>
             <AlertDescription>
               {error}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {validationError && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Заповніть всі поля</AlertTitle>
+            <AlertDescription>
+              {validationError}
             </AlertDescription>
           </Alert>
         )}
@@ -649,7 +702,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
               
               {!userInfo && (
                 <p className="text-orange-500 font-medium mt-4">
-                  Будь ласка, пройдіть тест ментального здоров'я, щоб надати вашу персональну інформацію.
+                  Увага: Вам потрібно спочатку додати вашу персональну інформацію. Натисніть кнопку нижче, і вас попросять її ввести.
                 </p>
               )}
             </div>
@@ -657,7 +710,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
             <Button 
               size="lg" 
               onClick={handleGeneratePlan}
-              disabled={isGenerating || !areInputsValid()}
+              disabled={isGenerating}
               className="min-w-[200px] w-full sm:w-auto"
               type="button" 
             >
@@ -693,54 +746,9 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
               </Button>
             </div>
             
-            <div className="p-4 bg-calm-50 rounded-lg border border-calm-100">
-              <p className="font-medium text-sm sm:text-base break-words">{generatedPlan.summary}</p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center">
-                  <Clock size={16} className="mr-2" /> Часові рамки
-                </h4>
-                <p className="text-sm sm:text-base break-words">{generatedPlan.timeframe}</p>
-              </div>
-              
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">Обґрунтування</h4>
-                <p className="text-sm sm:text-base break-words">{generatedPlan.reasoning}</p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div>
-              <h3 className="text-lg font-medium mb-4">Кроки для досягнення цілей</h3>
-              
-              <ScrollArea className="h-[300px] sm:h-[400px] pr-4">
-                <div className="space-y-4 sm:space-y-6">
-                  {generatedPlan.steps.map((step, index) => (
-                    <div key={index} className="relative pl-8 pb-6 border-l border-dashed border-calm-200">
-                      <div className="absolute left-0 -translate-x-1/2 bg-white border border-calm-200 rounded-full w-6 h-6 flex items-center justify-center">
-                        <span className="text-xs font-medium">{index + 1}</span>
-                      </div>
-                      
-                      <div className="bg-white p-3 sm:p-4 rounded-lg border border-calm-100 shadow-sm">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
-                          <h4 className="font-medium text-sm sm:text-base break-words">{step.title}</h4>
-                          <span className="text-xs bg-calm-100 text-calm-800 px-2 py-1 rounded-full whitespace-nowrap self-start">
-                            {step.timeframe}
-                          </span>
-                        </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{step.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-            
+            {/* Переміщуємо аудіо пісні під заголовок, якщо воно доступне */}
             {audioUrl && (
-              <div className="mt-6 p-4 bg-calm-50 rounded-lg border border-calm-100">
+              <div className="mt-2 p-4 bg-calm-50 rounded-lg border border-calm-100">
                 <div className="flex items-center gap-2 mb-3">
                   <Music size={18} className="text-primary" />
                   <h4 className="font-medium">Ваша мотиваційна пісня</h4>
@@ -768,6 +776,52 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
                 </div>
               </div>
             )}
+            
+            <div className="p-4 bg-calm-50 rounded-lg border border-calm-100">
+              <p className="font-medium text-sm sm:text-base break-words">{generatedPlan.summary}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center">
+                  <Clock size={16} className="mr-2" /> Часові рамки
+                </h4>
+                <p className="text-sm sm:text-base break-words">{generatedPlan.timeframe}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Обґрунтування</h4>
+                <p className="text-sm sm:text-base break-words">{generatedPlan.reasoning}</p>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <h3 className="text-lg font-medium mb-4">Кроки для досягнення цілей</h3>
+              
+              <ScrollArea className="h-[400px] sm:h-[500px] pr-4">
+                <div className="space-y-4 sm:space-y-6">
+                  {generatedPlan.steps.map((step, index) => (
+                    <div key={index} className="relative pl-8 pb-6 border-l border-dashed border-calm-200">
+                      <div className="absolute left-0 -translate-x-1/2 bg-white border border-calm-200 rounded-full w-6 h-6 flex items-center justify-center">
+                        <span className="text-xs font-medium">{index + 1}</span>
+                      </div>
+                      
+                      <div className="bg-white p-3 sm:p-4 rounded-lg border border-calm-100 shadow-sm">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
+                          <h4 className="font-medium text-sm sm:text-base break-words">{step.title}</h4>
+                          <span className="text-xs bg-calm-100 text-calm-800 px-2 py-1 rounded-full whitespace-nowrap self-start">
+                            {step.timeframe}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{step.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
           </div>
         )}
       </CardContent>
