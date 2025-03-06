@@ -28,11 +28,10 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
   
   const validateApiKey = async (key: string) => {
     try {
-      // Простий запит для перевірки валідності ключа
+      // Простий запит для перевірки валідності ключа через health endpoint
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      // Змінено на новий API endpoint
       const response = await fetch('https://apibox.erweima.ai/api/v1/health', {
         method: 'GET',
         headers: {
@@ -44,10 +43,14 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
       }).finally(() => clearTimeout(timeoutId));
       
       if (response.ok) {
-        return true;
+        const data = await response.json();
+        if (data.code === 200) {
+          return true;
+        } else {
+          throw new Error(data.msg || 'Невірний API ключ');
+        }
       } else {
-        const errorData = await response.json().catch(() => ({ error: { message: 'Невідома помилка' } }));
-        throw new Error(errorData.error?.message || 'Невірний API ключ');
+        throw new Error('Невірний API ключ або проблеми з сервером');
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -68,7 +71,10 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     setError(null);
     
     try {
-      // Зберігаємо ключ навіть якщо не можемо його перевірити (на випадок проблем з API)
+      // Спробуємо перевірити ключ перед збереженням
+      await validateApiKey(apiKey.trim());
+      
+      // Якщо перевірка пройшла успішно, зберігаємо ключ
       localStorage.setItem('suno_api_key', apiKey.trim());
       onApiKeySet();
       

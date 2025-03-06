@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Music, Loader2, Download, AlertCircle, Play, Pause, VolumeX } from 'lucide-react';
+import { Music, Loader2, Download, AlertCircle, Play, Pause } from 'lucide-react';
 import { generateMotivationalSong, UserInfo } from '../services/openAiService';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -20,6 +20,31 @@ interface SongData {
   lyrics: string;
 }
 
+interface TaskResponse {
+  code: number;
+  msg: string;
+  data?: {
+    taskId: string;
+  };
+}
+
+interface TaskDetailsResponse {
+  code: number;
+  msg: string;
+  data?: {
+    taskId: string;
+    status: string;
+    response?: {
+      sunoData?: Array<{
+        audioUrl?: string;
+        streamAudioUrl?: string;
+        duration?: number;
+      }>;
+    };
+    errorMessage?: string;
+  };
+}
+
 const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorProps) => {
   const [isGeneratingLyrics, setIsGeneratingLyrics] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -28,16 +53,23 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const [error, setError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     return () => {
+      // Очищення ресурсів при розмонтуванні компонента
       if (audio) {
         audio.pause();
         audio.src = '';
       }
+      
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
     };
-  }, [audio]);
+  }, [audio, pollingInterval]);
 
   const handleGenerateLyrics = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -62,6 +94,90 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     }
   };
 
+  const checkTaskStatus = async (taskId: string) => {
+    try {
+      const sunoApiKey = localStorage.getItem('suno_api_key');
+      
+      if (!sunoApiKey) {
+        throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
+      }
+      
+      const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sunoApiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+        throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
+      }
+      
+      const data: TaskDetailsResponse = await response.json();
+      
+      if (data.code !== 200) {
+        throw new Error(`Помилка API: ${data.msg}`);
+      }
+      
+      // Перевіряємо статус завдання
+      if (data.data?.status === 'SUCCESS' && data.data.response?.sunoData && data.data.response.sunoData.length > 0) {
+        // Завдання успішно виконано, знаходимо URL аудіо
+        const audioData = data.data.response.sunoData[0];
+        const url = audioData.audioUrl || audioData.streamAudioUrl;
+        
+        if (url) {
+          setAudioUrl(url);
+          const newAudio = new Audio(url);
+          newAudio.addEventListener('ended', () => setIsPlaying(false));
+          setAudio(newAudio);
+          
+          // Очищаємо інтервал опитування
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+          
+          setIsGeneratingAudio(false);
+          toast({
+            title: "Успішно",
+            description: "Аудіо пісню згенеровано успішно!",
+          });
+        } else {
+          throw new Error('Відповідь API не містить URL аудіо');
+        }
+      } else if (data.data?.status === 'PENDING' || 
+                data.data?.status === 'TEXT_SUCCESS' || 
+                data.data?.status === 'FIRST_SUCCESS') {
+        // Завдання ще в процесі, продовжуємо опитування
+        console.log(`Завдання в процесі виконання, статус: ${data.data.status}`);
+      } else if (data.data?.errorMessage) {
+        // Завдання завершилося з помилкою
+        throw new Error(`Помилка при генерації аудіо: ${data.data.errorMessage}`);
+      } else if (data.data?.status === 'CREATE_TASK_FAILED' || 
+                data.data?.status === 'GENERATE_AUDIO_FAILED' || 
+                data.data?.status === 'CALLBACK_EXCEPTION' || 
+                data.data?.status === 'SENSITIVE_WORD_ERROR') {
+        throw new Error(`Помилка при генерації аудіо: ${data.data.status}`);
+      }
+    } catch (err: any) {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+      
+      setIsGeneratingAudio(false);
+      setError(err.message || "Не вдалося отримати статус завдання");
+      toast({
+        title: "Помилка генерації аудіо",
+        description: err.message || "Не вдалося отримати статус завдання",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleGenerateAudio = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     
@@ -74,7 +190,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       const sunoApiKey = localStorage.getItem('suno_api_key');
       
       if (!sunoApiKey) {
-        throw new Error('API ключ Suno не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
+        throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
       }
       
       // Використовуємо AbortController для таймауту запиту
@@ -82,7 +198,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд таймаут
       
       try {
-        // Використовуємо новий API endpoint і формат запиту
+        // Використовуємо API endpoint і формат запиту згідно з документацією
         const response = await fetch('https://apibox.erweima.ai/api/v1/generate', {
           method: 'POST',
           headers: {
@@ -95,29 +211,41 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
             style: "Pop",
             title: songLyrics.title,
             customMode: true,
-            instrumental: false,
-            model: "V4"
+            instrumental: false, // Створюємо пісню з вокалом
+            model: "V4",
+            callBackUrl: "" // Залишаємо порожнім, оскільки будемо опитувати статус
           }),
           signal: controller.signal
         }).finally(() => clearTimeout(timeoutId));
         
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-          throw new Error(`Помилка API: ${errorData.error?.message || response.statusText}`);
+          const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+          throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
         }
         
-        const data = await response.json();
-        if (data.audioUrl || data.url) {
-          // Адаптуємося до можливих форматів відповіді
-          const url = data.audioUrl || data.url;
-          setAudioUrl(url);
-          
-          const newAudio = new Audio(url);
-          newAudio.addEventListener('ended', () => setIsPlaying(false));
-          setAudio(newAudio);
-        } else {
-          throw new Error('Відповідь API не містить URL аудіо');
+        const data: TaskResponse = await response.json();
+        
+        if (data.code !== 200 || !data.data?.taskId) {
+          throw new Error(`Помилка API: ${data.msg || 'Невідома помилка'}`);
         }
+        
+        // Зберігаємо taskId для подальшого опитування статусу
+        setTaskId(data.data.taskId);
+        
+        // Починаємо опитування статусу завдання кожні 5 секунд
+        const interval = window.setInterval(() => {
+          checkTaskStatus(data.data.taskId);
+        }, 5000);
+        
+        setPollingInterval(interval);
+        
+        // Перше опитування статусу
+        checkTaskStatus(data.data.taskId);
+        
+        toast({
+          title: "Запит відправлено",
+          description: "Генерація аудіо пісні розпочалась. Це може зайняти кілька хвилин.",
+        });
       } catch (fetchError: any) {
         if (fetchError.name === 'AbortError') {
           throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуйте ще раз.');
@@ -129,13 +257,13 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       }
     } catch (err: any) {
       setError(err.message || "Не вдалося згенерувати аудіо пісні");
+      setIsGeneratingAudio(false);
+      
       toast({
         title: "Помилка генерації аудіо",
         description: err.message || "Не вдалося згенерувати аудіо пісні",
         variant: "destructive",
       });
-    } finally {
-      setIsGeneratingAudio(false);
     }
   };
 
