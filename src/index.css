@@ -158,7 +158,7 @@
     @apply w-full sm:w-auto;
   }
   
-  /* Додаткові адаптивні класи */
+  /* ��одаткові адаптивні класи */
   .responsive-padding {
     @apply px-3 sm:px-6 md:px-8 py-2 sm:py-4 md:py-5;
   }
@@ -199,6 +199,16 @@
   .overflow-x-auto {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Додаємо breakpoint для надмалих екранів */
+  @layer responsive {
+    .xs\:inline {
+      display: inline;
+    }
+    .xs\:hidden {
+      display: none;
+    }
   }
 }
 
@@ -256,17 +266,5 @@
   
   .card-description {
     font-size: 0.875rem;
-  }
-}
-
-@layer utilities {
-  /* Додаємо breakpoint для надмалих екранів */
-  @variants responsive {
-    .xs\:inline {
-      display: inline;
-    }
-    .xs\:hidden {
-      display: none;
-    }
   }
 }
