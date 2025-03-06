@@ -3,6 +3,10 @@ import { ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Hero = () => {
+  const scrollToCoaching = () => {
+    document.getElementById('coaching')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -27,10 +31,19 @@ const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="rounded-full min-w-[180px]" onClick={() => document.getElementById('coaching')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button 
+              size="lg" 
+              className="rounded-full min-w-[180px]" 
+              onClick={scrollToCoaching}
+            >
               Почати шлях
             </Button>
-            <Button variant="outline" size="lg" className="rounded-full min-w-[180px]" onClick={() => document.getElementById('resources')?.scrollIntoView({ behavior: 'smooth' })}>
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="rounded-full min-w-[180px]" 
+              onClick={() => document.getElementById('resources')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               Дізнатися більше
             </Button>
           </div>

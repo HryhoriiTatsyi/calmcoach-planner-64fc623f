@@ -16,6 +16,11 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const scrollToCoaching = () => {
+    document.getElementById('coaching')?.scrollIntoView({ behavior: 'smooth' });
+    if (isMenuOpen) setIsMenuOpen(false);
+  };
+
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'py-3 bg-background/80 backdrop-blur-lg shadow-sm' : 'py-5 bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -36,7 +41,7 @@ const Header = () => {
             <a href="#consultation" className="text-foreground/80 hover:text-foreground transition-colors">
               Консультація
             </a>
-            <Button variant="default" size="sm" className="ml-4">
+            <Button variant="default" size="sm" className="ml-4" onClick={scrollToCoaching}>
               Почати
             </Button>
           </nav>
@@ -63,7 +68,7 @@ const Header = () => {
             <a href="#consultation" className="block py-2 text-foreground/80 hover:text-foreground transition-colors">
               Консультація
             </a>
-            <Button variant="default" size="default" className="w-full mt-4">
+            <Button variant="default" size="default" className="w-full mt-4" onClick={scrollToCoaching}>
               Почати
             </Button>
           </div>

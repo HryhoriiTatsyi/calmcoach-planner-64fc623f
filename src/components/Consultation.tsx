@@ -18,15 +18,10 @@ import { InstagramIcon, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
   phone: z.string().optional(),
+  social: z.string().optional(),
   message: z.string().min(10, {
-    message: "Message must be at least 10 characters.",
+    message: "Повідомлення має містити щонайменше 10 символів.",
   }),
 });
 
@@ -36,18 +31,31 @@ const Consultation = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
       phone: "",
+      social: "",
       message: "",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    
+    // Відправка даних на email
+    const emailData = {
+      to: 'vikktin@gmail.com',
+      subject: 'Новий запит на консультацію',
+      text: `
+        Телефон: ${values.phone || 'Не вказано'}
+        Соціальна мережа: ${values.social || 'Не вказано'}
+        Повідомлення: ${values.message}
+      `
+    };
+    
+    console.log('Дані для відправки на email:', emailData);
+    
     toast({
-      title: "Consultation request sent",
-      description: "We'll get back to you soon to schedule your session.",
+      title: "Запит надіслано",
+      description: "Ми зв'яжемося з вами найближчим часом для планування сесії.",
     });
     form.reset();
   }
@@ -59,13 +67,13 @@ const Consultation = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div className="animate-fade-in">
               <span className="inline-block px-4 py-2 rounded-full bg-calm-100 text-calm-800 text-sm font-medium mb-4">
-                Personal Coaching
+                Персональний коучинг
               </span>
               <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-6">
-                Ready for personalized guidance?
+                Готові до персоналізованої підтримки?
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Book a one-on-one consultation to dive deeper into your specific challenges and goals. I'll help you create a customized plan that addresses your unique situation.
+                Замовте індивідуальну консультацію, щоб глибше зануритися у ваші конкретні виклики та цілі. Я допоможу вам створити індивідуальний план, який відповідає вашій унікальній ситуації.
               </p>
               
               <div className="space-y-6">
@@ -74,8 +82,8 @@ const Consultation = () => {
                     <div className="h-6 w-6 flex items-center justify-center">1</div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Fill the form</h3>
-                    <p className="text-muted-foreground">Share a bit about yourself and what you'd like to work on</p>
+                    <h3 className="text-lg font-medium mb-1">Заповніть форму</h3>
+                    <p className="text-muted-foreground">Розкажіть трохи про себе та над чим би ви хотіли працювати</p>
                   </div>
                 </div>
                 
@@ -84,8 +92,8 @@ const Consultation = () => {
                     <div className="h-6 w-6 flex items-center justify-center">2</div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Schedule a call</h3>
-                    <p className="text-muted-foreground">We'll find a time that works for both of us</p>
+                    <h3 className="text-lg font-medium mb-1">Заплануйте дзвінок</h3>
+                    <p className="text-muted-foreground">Ми знайдемо час, який підходить для нас обох</p>
                   </div>
                 </div>
                 
@@ -94,8 +102,8 @@ const Consultation = () => {
                     <div className="h-6 w-6 flex items-center justify-center">3</div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium mb-1">Begin your journey</h3>
-                    <p className="text-muted-foreground">Start making meaningful progress with expert guidance</p>
+                    <h3 className="text-lg font-medium mb-1">Почніть свій шлях</h3>
+                    <p className="text-muted-foreground">Почніть досягати значного прогресу з експертним керівництвом</p>
                   </div>
                 </div>
               </div>
@@ -108,52 +116,38 @@ const Consultation = () => {
                   className="inline-flex items-center px-6 py-3 bg-[#E1306C] hover:bg-[#C13584] text-white rounded-xl transition-colors"
                 >
                   <InstagramIcon className="mr-2 h-5 w-5" />
-                  Follow on Instagram
+                  Слідкуйте в Instagram
                 </a>
               </div>
             </div>
             
             <div className="glass-panel rounded-2xl p-8 animate-fade-in-up">
-              <h3 className="text-xl font-medium mb-6">Request a Consultation</h3>
+              <h3 className="text-xl font-medium mb-6">Запит на консультацію</h3>
               
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
                     control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name" {...field} className="input-field" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="your.email@example.com" {...field} className="input-field" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone (optional)</FormLabel>
+                        <FormLabel>Телефон</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (123) 456-7890" {...field} className="input-field" />
+                          <Input placeholder="+380 XX XXX XX XX" {...field} className="input-field" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="social"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Посилання на соціальну мережу</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://instagram.com/your_profile" {...field} className="input-field" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -165,10 +159,10 @@ const Consultation = () => {
                     name="message"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>What would you like to work on?</FormLabel>
+                        <FormLabel>Над чим би ви хотіли працювати?</FormLabel>
                         <FormControl>
                           <Textarea 
-                            placeholder="Share a brief description of your goals or challenges..." 
+                            placeholder="Поділіться коротким описом ваших цілей або викликів..." 
                             className="textarea-field" 
                             {...field} 
                           />
@@ -179,13 +173,13 @@ const Consultation = () => {
                   />
                   
                   <Button type="submit" className="w-full">
-                    Submit Request <ArrowRight className="ml-2 h-4 w-4" />
+                    Відправити запит <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </form>
               </Form>
               
               <p className="text-xs text-muted-foreground mt-6 text-center">
-                I'll respond to your inquiry within 24-48 hours. All information shared is confidential.
+                Я відповім на ваш запит протягом 24-48 годин. Вся надана інформація є конфіденційною.
               </p>
             </div>
           </div>

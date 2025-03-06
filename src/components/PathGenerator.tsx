@@ -4,14 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Clock, ArrowRight, Download, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, Clock, ArrowRight, Download, Loader2, AlertCircle, Music } from 'lucide-react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
-import { generateActionPlan, UserInfo } from '../services/openAiService';
+import { generateActionPlan, generateMotivationalSong, UserInfo } from '../services/openAiService';
 import { useToast } from '@/components/ui/use-toast';
 import ApiKeyInput from './ApiKeyInput';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import SunoApiKeyInput from './SunoApiKeyInput';
+import { Progress } from '@/components/ui/progress';
 
 interface PathGeneratorProps {
   currentState: CurrentStateData;
@@ -32,13 +33,236 @@ interface GeneratedPlan {
   steps: Step[];
 }
 
+interface SongProgress {
+  isGenerating: boolean;
+  stage: 'lyrics' | 'audio' | 'complete';
+  progress: number;
+  message: string;
+}
+
 const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
   const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
   const [sunoApiKeySet, setSunoApiKeySet] = useState(!!localStorage.getItem('suno_api_key'));
   const [error, setError] = useState<string | null>(null);
+  const [songProgress, setSongProgress] = useState<SongProgress | null>(null);
   const { toast } = useToast();
+  
+  const generateSongAfterPlan = async () => {
+    if (!userInfo) return;
+    
+    try {
+      // Встановлюємо стан прогресу для генерації тексту пісні
+      setSongProgress({
+        isGenerating: true,
+        stage: 'lyrics',
+        progress: 10,
+        message: 'Генеруємо текст пісні...'
+      });
+      
+      // Генеруємо текст пісні
+      const songData = await generateMotivationalSong(currentState, desiredState, userInfo);
+      
+      // Оновлюємо прогрес після генерації тексту
+      setSongProgress({
+        isGenerating: true,
+        stage: 'audio',
+        progress: 40,
+        message: 'Створюємо аудіо пісні...'
+      });
+      
+      // Генеруємо аудіо пісні
+      await generateAudio(songData);
+      
+      // Завершуємо процес
+      setSongProgress({
+        isGenerating: false,
+        stage: 'complete',
+        progress: 100,
+        message: 'Генерація завершена!'
+      });
+      
+      // Відкладене скидання індикатора прогресу
+      setTimeout(() => {
+        setSongProgress(null);
+      }, 3000);
+      
+    } catch (error: any) {
+      console.error('Помилка при генерації пісні:', error);
+      
+      // Скидаємо стан прогресу у випадку помилки
+      setSongProgress(null);
+      
+      toast({
+        title: "Пісня не згенерована",
+        description: "Процес генерації пісні завершився з помилкою, але план дій успішно створено",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const generateAudio = async (songData: { title: string, lyrics: string }) => {
+    const sunoApiKey = localStorage.getItem('suno_api_key');
+    
+    if (!sunoApiKey) {
+      throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
+    }
+    
+    // Використовуємо AbortController для таймауту запиту
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    try {
+      const response = await fetch('https://apibox.erweima.ai/api/v1/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${sunoApiKey}`
+        },
+        body: JSON.stringify({
+          prompt: songData.lyrics,
+          style: "Pop",
+          title: songData.title,
+          customMode: true,
+          instrumental: false,
+          model: "V4",
+          callBackUrl: "https://no-callback.com"
+        }),
+        signal: controller.signal
+      }).finally(() => clearTimeout(timeoutId));
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+        throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.code !== 200 || !data.data?.taskId) {
+        throw new Error(`Помилка API: ${data.msg || 'Невідома помилка'}`);
+      }
+      
+      // Починаємо опитування статусу завдання
+      await pollTaskStatus(data.data.taskId);
+      
+      // Відправляємо електронний лист з інформацією
+      await sendEmailWithUserData();
+      
+    } catch (fetchError: any) {
+      if (fetchError.name === 'AbortError') {
+        throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуйте ще раз.');
+      } else if (fetchError.message === 'Failed to fetch') {
+        throw new Error('Неможливо з\'єднатися з API. Перевірте своє інтернет-з\'єднання, коректність API ключа або спробуйте пізніше.');
+      } else {
+        throw fetchError;
+      }
+    }
+  };
+  
+  const pollTaskStatus = (taskId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let pollingCount = 0;
+      const maxPollingAttempts = 12; // 1 хвилина (12 * 5 секунд)
+      
+      const pollInterval = setInterval(async () => {
+        try {
+          pollingCount++;
+          
+          // Оновлюємо прогрес на основі кількості спроб
+          const progressValue = Math.min(40 + (pollingCount * 5), 95);
+          setSongProgress(prev => prev ? {
+            ...prev,
+            progress: progressValue,
+            message: `Створюємо аудіо пісні... ${Math.round(progressValue)}%`
+          } : null);
+          
+          const sunoApiKey = localStorage.getItem('suno_api_key');
+          
+          if (!sunoApiKey) {
+            clearInterval(pollInterval);
+            reject(new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.'));
+            return;
+          }
+          
+          const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${sunoApiKey}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+            throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.code !== 200) {
+            throw new Error(`Помилка API: ${data.msg}`);
+          }
+          
+          if (data.data?.status === 'SUCCESS' && data.data.response?.sunoData && data.data.response.sunoData.length > 0) {
+            clearInterval(pollInterval);
+            resolve();
+            return;
+          } else if (data.data?.errorMessage || 
+                    data.data?.status === 'CREATE_TASK_FAILED' || 
+                    data.data?.status === 'GENERATE_AUDIO_FAILED' || 
+                    data.data?.status === 'CALLBACK_EXCEPTION' || 
+                    data.data?.status === 'SENSITIVE_WORD_ERROR') {
+            clearInterval(pollInterval);
+            reject(new Error(`Помилка при генерації аудіо: ${data.data.errorMessage || data.data.status}`));
+            return;
+          }
+          
+          // Якщо перевищено максимальну кількість спроб
+          if (pollingCount >= maxPollingAttempts) {
+            clearInterval(pollInterval);
+            resolve(); // Завершуємо опитування, але не вважаємо це помилкою
+          }
+          
+        } catch (error) {
+          clearInterval(pollInterval);
+          reject(error);
+        }
+      }, 5000);
+    });
+  };
+  
+  const sendEmailWithUserData = async () => {
+    try {
+      // Створюємо об'єкт з даними для відправки
+      const emailData = {
+        to: 'vikktin@gmail.com',
+        subject: `Нові дані коучинг-сесії від ${userInfo?.name || 'користувача'}`,
+        text: `
+          Ім'я: ${userInfo?.name || 'Не вказано'}
+          Вік: ${userInfo?.age || 'Не вказано'}
+          Стать: ${userInfo?.gender || 'Не вказано'}
+          
+          Поточний стан:
+          ${JSON.stringify(currentState, null, 2)}
+          
+          Бажаний стан:
+          ${JSON.stringify(desiredState, null, 2)}
+          
+          Ця інформація була згенерована автоматично.
+        `
+      };
+      
+      // У реальному проекті тут був би код для відправки електронної пошти
+      // Оскільки ми не маємо бекенду, просто логуємо дані
+      console.log('Дані для відправки на email:', emailData);
+      
+    } catch (error) {
+      console.error('Помилка при спробі відправити email:', error);
+    }
+  };
   
   const handleGeneratePlan = async () => {
     if (!apiKeySet) {
@@ -66,6 +290,15 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       // Використовуємо OpenAI API для генерації плану
       const plan = await generateActionPlan(currentState, desiredState, userInfo);
       setGeneratedPlan(plan);
+      
+      // Запускаємо автоматичну генерацію пісні як бонусу
+      generateSongAfterPlan();
+      
+      toast({
+        title: "План згенеровано успішно",
+        description: "Ваш персоналізований план дій готовий. Розпочалась генерація бонусної пісні!",
+      });
+      
     } catch (error: any) {
       setError(error.message || "Не вдалося згенерувати план. Перевірте свій API-ключ та спробуйте знову.");
       toast({
@@ -155,6 +388,17 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
               {error}
             </AlertDescription>
           </Alert>
+        )}
+        
+        {songProgress && songProgress.isGenerating && (
+          <div className="mb-6 p-4 bg-calm-50 rounded-lg border border-calm-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Music size={18} className="text-primary animate-pulse" />
+              <h4 className="font-medium">Бонус: Генерація мотиваційної пісні</h4>
+            </div>
+            <Progress value={songProgress.progress} className="h-2 mb-2" />
+            <p className="text-sm text-muted-foreground">{songProgress.message}</p>
+          </div>
         )}
         
         {!generatedPlan ? (

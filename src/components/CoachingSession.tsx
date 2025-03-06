@@ -122,16 +122,6 @@ const CoachingSession = () => {
                 userInfo={userInfo} 
               />
             </div>
-            
-            {userInfo && (
-              <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
-                <SongGenerator 
-                  currentState={currentState}
-                  desiredState={desiredState}
-                  userInfo={userInfo}
-                />
-              </div>
-            )}
           </>
         )}
       </div>
