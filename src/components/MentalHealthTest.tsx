@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Loader2, Brain, CheckCircle2 } from 'lucide-react';
+import { generateMentalHealthTest } from '../services/openAiService';
+import { useToast } from '@/components/ui/use-toast';
+import ApiKeyInput from './ApiKeyInput';
 
 interface Question {
   id: number;
@@ -91,6 +94,8 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
   const [answers, setAnswers] = useState<{[key: number]: number}>({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
+  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
+  const { toast } = useToast();
   
   const handleAnswer = (questionId: number, answerIndex: number) => {
     setAnswers(prev => ({
@@ -111,49 +116,44 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    if (!apiKeySet) {
+      toast({
+        title: "API-ключ відсутній",
+        description: "Будь ласка, введіть свій API-ключ OpenAI для продовження",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     
-    // Імітація запиту до AI для аналізу результатів тесту
-    setTimeout(() => {
-      // Аналіз відповідей і формування персоналізованого результату
-      const emotionalScore = answers[1] || 0;
-      const sleepScore = answers[2] || 0;
-      const energyScore = answers[3] || 0;
-      const focusScore = answers[4] || 0;
-      const joyScore = answers[5] || 0;
-      const productivityScore = answers[6] || 0;
-      const relationshipsScore = answers[7] || 0;
-      const exerciseScore = answers[8] || 0;
-      const careerScore = answers[9] || 0;
-      
-      // Персоналізована відповідь на основі відповідей користувача
-      const result: TestResult = {
-        currentState: {
-          emotional: getEmotionalState(emotionalScore, sleepScore, joyScore),
-          mental: getMentalState(focusScore, energyScore),
-          career: getCareerState(productivityScore, careerScore),
-          relationships: getRelationshipsState(relationshipsScore),
-          physical: getPhysicalState(exerciseScore, energyScore)
-        },
-        desiredState: {
-          emotional: getDesiredEmotionalState(emotionalScore, sleepScore, joyScore),
-          mental: getDesiredMentalState(focusScore, energyScore),
-          career: getDesiredCareerState(productivityScore, careerScore),
-          relationships: getDesiredRelationshipsState(relationshipsScore),
-          physical: getDesiredPhysicalState(exerciseScore, energyScore)
-        }
-      };
+    try {
+      // Використовуємо OpenAI API для аналізу результатів тесту
+      const result = await generateMentalHealthTest(answers);
       
       setIsGenerating(false);
       setTestCompleted(true);
       onComplete(result);
-    }, 3000);
+    } catch (error: any) {
+      setIsGenerating(false);
+      toast({
+        title: "Помилка генерації",
+        description: error.message || "Не вдалося згенерувати результати тесту. Перевірте свій API-ключ та спробуйте знову.",
+        variant: "destructive",
+      });
+    }
   };
   
   const currentQuestion = mentalHealthQuestions[currentStep];
   const isLastQuestion = currentStep === mentalHealthQuestions.length - 1;
   const canProceed = currentQuestion && answers[currentQuestion.id] !== undefined;
+  
+  if (!apiKeySet) {
+    return (
+      <ApiKeyInput onApiKeySet={() => setApiKeySet(true)} />
+    );
+  }
   
   return (
     <Card className="w-full border-calm-100 shadow-sm overflow-hidden">
@@ -253,107 +253,6 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
       )}
     </Card>
   );
-};
-
-// Функції для формування персоналізованих результатів
-const getEmotionalState = (emotionalScore: number, sleepScore: number, joyScore: number) => {
-  if (emotionalScore > 2 || sleepScore > 2) {
-    return "Ви відчуваєте підвищений рівень стресу і тривоги, що може негативно впливати на ваше емоційне благополуччя. Ваш сон не завжди якісний, що може посилювати відчуття емоційного виснаження.";
-  } else if (joyScore > 2) {
-    return "Хоча ваш рівень стресу контрольований, ви помічаєте, що деякі речі, які раніше приносили радість, зараз дають менше задоволення. Це може свідчити про певне емоційне виснаження.";
-  } else {
-    return "Ваш емоційний стан здебільшого збалансований. Ви добре справляєтесь зі стресом, маєте якісний сон і здатні отримувати задоволення від звичних речей.";
-  }
-};
-
-const getMentalState = (focusScore: number, energyScore: number) => {
-  if (focusScore > 2 && energyScore > 2) {
-    return "Вам часто важко зосередитися на завданнях і підтримувати фокус уваги. Ви відчуваєте нестачу ментальної енергії, що може впливати на продуктивність і прийняття рішень.";
-  } else if (focusScore > 2 || energyScore > 2) {
-    return "Ваша здатність до концентрації коливається. Бувають періоди, коли вам важко підтримувати фокус, особливо при стомленні. Ви маєте резерви ментальної енергії, але вони виснажуються швидше, ніж хотілося б.";
-  } else {
-    return "Ваш ментальний стан дозволяє вам добре концентруватися на завданнях. Ви маєте достатньо ментальної енергії для повсякденних справ і зазвичай приймаєте зважені рішення.";
-  }
-};
-
-const getCareerState = (productivityScore: number, careerScore: number) => {
-  if (productivityScore > 2 && careerScore > 2) {
-    return "Ви відчуваєте незадоволення своїм професійним розвитком і помічаєте знижену продуктивність. Можливо, ви не бачите чіткого шляху кар'єрного зростання або працюєте не в тій сфері, яка відповідає вашим цінностям та інтересам.";
-  } else if (productivityScore > 2 || careerScore > 2) {
-    return "Хоча ви досягаєте певних результатів у професійній сфері, ви відчуваєте, що могли б реалізувати свій потенціал повніше. Ваша продуктивність коливається, і ви шукаєте способи привнести більше задоволення у свою робочу діяльність.";
-  } else {
-    return "Ви задоволені своїм професійним розвитком і зазвичай демонструєте високу продуктивність. Ваша робота відповідає вашим цінностям і дає відчуття реалізації.";
-  }
-};
-
-const getRelationshipsState = (relationshipsScore: number) => {
-  if (relationshipsScore > 2) {
-    return "Ваші стосунки з близькими людьми потребують уваги. Можливо, ви відчуваєте нестачу глибокого зв'язку, розуміння або підтримки. Комунікація може бути ускладнена, що впливає на якість взаємодії.";
-  } else if (relationshipsScore === 2) {
-    return "Ваші стосунки здебільшого задовільні, але є сфери, які потребують розвитку. Можливо, ви хотіли б поглибити деякі зв'язки або покращити комунікацію в певних відносинах.";
-  } else {
-    return "Ви маєте здорові, підтримуючі стосунки з близькими людьми. Ви відчуваєте розуміння і підтримку, здатні відкрито спілкуватися і вирішувати конфлікти конструктивно.";
-  }
-};
-
-const getPhysicalState = (exerciseScore: number, energyScore: number) => {
-  if (exerciseScore > 2 && energyScore > 2) {
-    return "Ви рідко займаєтесь фізичними вправами і часто відчуваєте нестачу енергії. Це може впливати на ваше загальне самопочуття, імунітет і здатність справлятися зі стресом.";
-  } else if (exerciseScore > 2 || energyScore > 2) {
-    return "Ваша фізична активність не є регулярною, і ви іноді відчуваєте зниження енергії. Ваше тіло потребує більше руху і кращого режиму відпочинку для оптимального функціонування.";
-  } else {
-    return "Ви підтримуєте добрий рівень фізичної активності і зазвичай маєте достатньо енергії для повсякденних справ. Ваше тіло отримує необхідне навантаження, що сприяє загальному здоров'ю.";
-  }
-};
-
-const getDesiredEmotionalState = (emotionalScore: number, sleepScore: number, joyScore: number) => {
-  if (emotionalScore > 2 || sleepScore > 2) {
-    return "Баланс емоційного стану: регулярно практикувати техніки зниження стресу, покращити якість сну, знаходити час для занять, що приносять радість і задоволення. Розвивати емоційну стійкість для ефективного управління життєвими викликами.";
-  } else if (joyScore > 2) {
-    return "Відновлення здатності отримувати задоволення: знайти нові джерела радості та натхнення, відкрити для себе захоплюючі хобі, посилити практики вдячності у повсякденному житті.";
-  } else {
-    return "Зберегти наявний емоційний баланс, розвиваючи додаткові копінг-стратегії для майбутніх викликів. Продовжувати практики, що підтримують якісний сон та позитивні емоції.";
-  }
-};
-
-const getDesiredMentalState = (focusScore: number, energyScore: number) => {
-  if (focusScore > 2 && energyScore > 2) {
-    return "Покращення ментальної ясності і фокусу: розвинути регулярні практики медитації уваги, створити оптимальне робоче середовище, навчитись правильно розподіляти ментальну енергію та відновлюватись.";
-  } else if (focusScore > 2 || energyScore > 2) {
-    return "Стабілізація здатності до концентрації: структурувати робочий процес для максимального використання періодів високої продуктивності, розвивати когнітивну гнучкість, практикувати техніки відновлення ментальної енергії.";
-  } else {
-    return "Підтримання високого рівня когнітивних функцій: регулярно включати нові інтелектуальні виклики, зберігати збалансований підхід до розподілу ментальної енергії, розвивати креативне мислення.";
-  }
-};
-
-const getDesiredCareerState = (productivityScore: number, careerScore: number) => {
-  if (productivityScore > 2 && careerScore > 2) {
-    return "Переосмислення професійного шляху: визначити свої ключові таланти і сильні сторони, знайти сферу, що відповідає вашим цінностям, розробити чіткий план кар'єрного розвитку з конкретними кроками.";
-  } else if (productivityScore > 2 || careerScore > 2) {
-    return "Оптимізація професійної діяльності: виявити і усунути фактори, що знижують продуктивність, розробити стратегію професійного зростання, знайти додаткові джерела мотивації та задоволення від роботи.";
-  } else {
-    return "Подальший професійний розвиток: вивчити додаткові сфери спеціалізації, розширити професійну мережу, розпочати менторську діяльність або знайти нові виклики в поточній ролі.";
-  }
-};
-
-const getDesiredRelationshipsState = (relationshipsScore: number) => {
-  if (relationshipsScore > 2) {
-    return "Трансформація відносин: розвивати навички ефективної комунікації, практикувати емпатичне слухання, навчитися виражати свої потреби і встановлювати здорові межі, поглиблювати емоційну інтимність з близькими.";
-  } else if (relationshipsScore === 2) {
-    return "Покращення якості стосунків: приділяти більше часу значущим відносинам, покращувати навички вирішення конфліктів, виявляти більше вразливості та відкритості з близькими людьми.";
-  } else {
-    return "Підтримка і розвиток наявних стосунків: продовжувати інвестувати в близькі зв'язки, розширювати коло спілкування, знаходити нові способи поглиблення взаєморозуміння з близькими.";
-  }
-};
-
-const getDesiredPhysicalState = (exerciseScore: number, energyScore: number) => {
-  if (exerciseScore > 2 && energyScore > 2) {
-    return "Формування звички регулярної фізичної активності: розпочати з коротких, легких тренувань, поступово збільшуючи інтенсивність, знайти приємний вид фізичної активності, покращити режим харчування і сну для підвищення рівня енергії.";
-  } else if (exerciseScore > 2 || energyScore > 2) {
-    return "Встановлення стабільної системи фізичного здоров'я: створити регулярний розклад тренувань, що відповідає вашому способу життя, збалансувати фізичну активність з відпочинком, розробити стратегію для підтримки енергії протягом дня.";
-  } else {
-    return "Оптимізація фізичної форми: урізноманітнити тренування для всебічного розвитку, встановити нові фізичні цілі, впровадити практики активного відновлення і регенерації.";
-  }
 };
 
 export default MentalHealthTest;

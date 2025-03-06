@@ -7,6 +7,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Clock, ArrowRight, Download, Loader2 } from 'lucide-react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
+import { generateActionPlan } from '../services/openAiService';
+import { useToast } from '@/components/ui/use-toast';
+import ApiKeyInput from './ApiKeyInput';
 
 interface PathGeneratorProps {
   currentState: CurrentStateData;
@@ -29,64 +32,67 @@ interface GeneratedPlan {
 const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
+  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
+  const { toast } = useToast();
   
-  const handleGeneratePlan = () => {
+  const handleGeneratePlan = async () => {
+    if (!apiKeySet) {
+      toast({
+        title: "API-ключ відсутній",
+        description: "Будь ласка, введіть свій API-ключ OpenAI для продовження",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsGenerating(true);
     
-    // Симуляція виклику API
-    setTimeout(() => {
-      // Відповідь від Вікторії
-      const mockPlan: GeneratedPlan = {
-        summary: "Цей персоналізований план фокусується на покращенні емоційної стійкості, досягненні кар'єрних цілей та поліпшенні стосунків. Кожен крок базується на попередньому, створюючи стійкі зміни.",
-        reasoning: "На основі вашої інформації, я визначила, що емоційне благополуччя є основою для ваших цілей. План починається з щоденної усвідомленості для розвитку самосвідомості, продовжується діяльністю з розбудови відносин і завершується професійним розвитком. Така послідовність дозволяє кожній сфері підсилювати інші.",
-        timeframe: "3 місяці",
-        steps: [
-          {
-            title: "Щоденна практика усвідомленості",
-            description: "Почніть з 10-хвилинної щоденної медитації вранці для створення емоційної свідомості та стабільності. Використовуйте додатки, як Headspace або Calm для керівництва.",
-            timeframe: "Тижні 1-2"
-          },
-          {
-            title: "Емоційний щоденник",
-            description: "Ведіть щоденний емоційний щоденник для відстеження моделей та тригерів. Записуйте три позитивні переживання щодня для розвитку практики вдячності.",
-            timeframe: "Тижні 1-4"
-          },
-          {
-            title: "Щотижневий розклад вправ",
-            description: "Встановіть постійний розклад вправ з 3 кардіо-сесіями та 2 тренуваннями силових вправ на тиждень для покращення фізичного самопочуття та зменшення стресу.",
-            timeframe: "Тижні 2-12"
-          },
-          {
-            title: "Розвиток професійних навичок",
-            description: "Визначте одну ключову професійну навичку для розвитку. Витрачайте 3 години на тиждень на курси або практику для покращення кар'єрних перспектив.",
-            timeframe: "Тижні 3-10"
-          },
-          {
-            title: "Розбудова стосунків",
-            description: "Заплануйте одну змістовну розмову з другом або членом сім'ї щотижня. Практикуйте активне слухання та вразливість.",
-            timeframe: "Тижні 3-12"
-          },
-          {
-            title: "Вечори цифрової детоксикації",
-            description: "Впровадьте вечори без технологій двічі на тиждень для покращення ясності розуму та присутності з близькими.",
-            timeframe: "Тижні 4-12"
-          },
-          {
-            title: "Візуальна дошка кар'єри",
-            description: "Створіть візуальне представлення вашої ідеальної кар'єри. Переглядайте щотижня та коригуйте свої дії відповідним чином.",
-            timeframe: "Тиждень 5"
-          },
-          {
-            title: "Щотижневий огляд і коригування",
-            description: "Виділіть 30 хвилин щонеділі для огляду прогресу, святкування досягнень та коригування діяльності наступного тижня за потреби.",
-            timeframe: "Тижні 1-12"
-          }
-        ]
-      };
-      
-      setGeneratedPlan(mockPlan);
+    try {
+      // Використовуємо OpenAI API для генерації плану
+      const plan = await generateActionPlan(currentState, desiredState);
+      setGeneratedPlan(plan);
+    } catch (error: any) {
+      toast({
+        title: "Помилка генерації",
+        description: error.message || "Не вдалося згенерувати план. Перевірте свій API-ключ та спробуйте знову.",
+        variant: "destructive",
+      });
+    } finally {
       setIsGenerating(false);
-    }, 3000);
+    }
+  };
+  
+  const handleDownloadPlan = () => {
+    if (!generatedPlan) return;
+    
+    const planText = `
+ПЕРСОНАЛІЗОВАНИЙ ПЛАН ВІД ВІКТОРІЇ
+
+КОРОТКИЙ ОГЛЯД:
+${generatedPlan.summary}
+
+ОБҐРУНТУВАННЯ:
+${generatedPlan.reasoning}
+
+ОРІЄНТОВНИЙ ТЕРМІН: ${generatedPlan.timeframe}
+
+КРОКИ ДІЙ:
+${generatedPlan.steps.map((step, index) => `
+${index + 1}. ${step.title}
+   ${step.description}
+   Часові рамки: ${step.timeframe}
+`).join('')}
+    `;
+    
+    const blob = new Blob([planText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'План_від_Вікторії.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
   
   const areInputsValid = () => {
@@ -104,6 +110,12 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
       desiredState.physical.trim() !== ''
     );
   };
+  
+  if (!apiKeySet) {
+    return (
+      <ApiKeyInput onApiKeySet={() => setApiKeySet(true)} />
+    );
+  }
   
   return (
     <Card className="w-full border-calm-100 shadow-sm">
@@ -203,11 +215,20 @@ const PathGenerator = ({ currentState, desiredState }: PathGeneratorProps) => {
       
       {generatedPlan && (
         <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-between items-center">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleDownloadPlan}
+          >
             <Download size={16} />
             Завантажити план
           </Button>
-          <Button size="sm" className="gap-2">
+          <Button 
+            size="sm" 
+            className="gap-2"
+            onClick={() => window.open('https://www.instagram.com/viktoria_lifecoach?igsh=bjlieHU1MHdraXlh&utm_source=qr', '_blank')}
+          >
             Почати діяти
             <ArrowRight size={16} />
           </Button>
