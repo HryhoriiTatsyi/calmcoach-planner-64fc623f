@@ -96,7 +96,77 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   const [error, setError] = useState<string | null>(null);
   const [songProgress, setSongProgress] = useState<SongProgress | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [taskId, setTaskId] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Завантаження збереженого стану з localStorage
+  useEffect(() => {
+    try {
+      const savedPlan = localStorage.getItem('generatedPlan');
+      const savedSongProgress = localStorage.getItem('songProgress');
+      const savedAudioUrl = localStorage.getItem('audioUrl');
+      const savedTaskId = localStorage.getItem('taskId');
+      
+      if (savedPlan) {
+        setGeneratedPlan(JSON.parse(savedPlan));
+      }
+      
+      if (savedSongProgress) {
+        setSongProgress(JSON.parse(savedSongProgress));
+      }
+      
+      if (savedAudioUrl) {
+        setAudioUrl(savedAudioUrl);
+      }
+      
+      if (savedTaskId) {
+        setTaskId(savedTaskId);
+      }
+    } catch (error) {
+      console.error('Помилка при завантаженні даних з localStorage:', error);
+    }
+  }, []);
+
+  // Збереження стану в localStorage
+  useEffect(() => {
+    try {
+      if (generatedPlan) {
+        localStorage.setItem('generatedPlan', JSON.stringify(generatedPlan));
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні даних в localStorage:', error);
+    }
+  }, [generatedPlan]);
+
+  useEffect(() => {
+    try {
+      if (songProgress) {
+        localStorage.setItem('songProgress', JSON.stringify(songProgress));
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні даних в localStorage:', error);
+    }
+  }, [songProgress]);
+
+  useEffect(() => {
+    try {
+      if (audioUrl) {
+        localStorage.setItem('audioUrl', audioUrl);
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні даних в localStorage:', error);
+    }
+  }, [audioUrl]);
+
+  useEffect(() => {
+    try {
+      if (taskId) {
+        localStorage.setItem('taskId', taskId);
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні даних в localStorage:', error);
+    }
+  }, [taskId]);
   
   // Функція для отримання повного імені користувача
   const getFullUserName = () => {
@@ -106,7 +176,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
   
   // Перевіряємо, чи є аудіо пісні кожні 10 секунд
   useEffect(() => {
-    if (!songProgress?.isGenerating || !userInfo) return;
+    if (!songProgress?.isGenerating || !userInfo || !taskId) return;
     
     const checkForAudio = async () => {
       try {
@@ -114,7 +184,8 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         
         if (!sunoApiKey) return;
         
-        const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/records`, {
+        // Перевіряємо статус по taskId
+        const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${sunoApiKey}`,
@@ -127,13 +198,10 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         
         const data = await response.json();
         
-        if (data.code !== 200 || !data.data?.records) return;
+        if (data.code !== 200 || !data.data) return;
         
-        // Шукаємо найновіший запис
-        const latestRecord = data.data.records[0];
-        
-        if (latestRecord?.sunoData && latestRecord.sunoData.length > 0) {
-          const audioData = latestRecord.sunoData[0];
+        if (data.data.status === 'SUCCESS' && data.data.response?.sunoData?.length > 0) {
+          const audioData = data.data.response.sunoData[0];
           const url = audioData.audioUrl || audioData.streamAudioUrl;
           
           if (url) {
@@ -145,15 +213,38 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
               message: 'Пісню згенеровано успішно!'
             });
           }
+        } else if (data.data.status === 'PENDING' || 
+                   data.data.status === 'TEXT_SUCCESS' || 
+                   data.data.status === 'FIRST_SUCCESS') {
+          // Оновлюємо прогрес на основі статусу
+          let progress = songProgress.progress;
+          let message = songProgress.message;
+          
+          if (data.data.status === 'TEXT_SUCCESS') {
+            progress = Math.max(progress, 60);
+            message = 'Текст створено, генеруємо аудіо...';
+          } else if (data.data.status === 'FIRST_SUCCESS') {
+            progress = Math.max(progress, 80);
+            message = 'Аудіо майже готове, очікуйте...';
+          }
+          
+          setSongProgress(prev => prev ? {
+            ...prev,
+            progress,
+            message
+          } : null);
         }
       } catch (error) {
         console.error('Помилка при перевірці аудіо:', error);
       }
     };
     
+    // Запускаємо перевірку відразу при монтуванні компонента
+    checkForAudio();
+    
     const intervalId = setInterval(checkForAudio, 10000);
     return () => clearInterval(intervalId);
-  }, [songProgress, userInfo]);
+  }, [songProgress, userInfo, taskId]);
   
   const generateSongAfterPlan = async () => {
     if (!userInfo) return;
@@ -175,18 +266,21 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
         isGenerating: true,
         stage: 'audio',
         progress: 40,
-        message: 'Створюємо аудіо пісні...'
+        message: 'Створюємо аудіо пісні (може зайняти до 5 хвилин)...'
       });
       
       // Генеруємо аудіо пісні
-      await generateAudio(songData);
+      const newTaskId = await generateAudio(songData);
+      if (newTaskId) {
+        setTaskId(newTaskId);
+      }
       
       // Продовжуємо показувати прогрес, пізніше перевіримо наявність аудіо через useEffect
       setSongProgress({
         isGenerating: true,
         stage: 'audio',
         progress: 60,
-        message: 'Очікуємо завершення генерації аудіо...'
+        message: 'Очікуємо завершення генерації аудіо (може зайняти до 5 хвилин)...'
       });
       
       // Відправляємо електронний лист з інформацією
@@ -260,7 +354,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
       setSongProgress(prev => prev ? {
         ...prev,
         progress: 50,
-        message: 'Завдання на створення пісні додано в чергу...'
+        message: 'Завдання на створення пісні додано в чергу. Генерація може зайняти до 5 хвилин...'
       } : null);
       
       return data.data.taskId;
@@ -404,6 +498,96 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
     return currentStateValid && desiredStateValid && userInfo !== null;
   };
   
+  // Кнопка для ручного оновлення статусу пісні
+  const handleManualCheckStatus = async () => {
+    if (!taskId) return;
+    
+    try {
+      const sunoApiKey = localStorage.getItem('suno_api_key');
+      
+      if (!sunoApiKey) return;
+      
+      // Перевіряємо статус по taskId
+      const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${sunoApiKey}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        toast({
+          title: "Помилка перевірки",
+          description: "Не вдалося перевірити статус генерації пісні",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.code !== 200 || !data.data) {
+        toast({
+          title: "Помилка API",
+          description: data.msg || "Невідома помилка при перевірці статусу",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (data.data.status === 'SUCCESS' && data.data.response?.sunoData?.length > 0) {
+        const audioData = data.data.response.sunoData[0];
+        const url = audioData.audioUrl || audioData.streamAudioUrl;
+        
+        if (url) {
+          setAudioUrl(url);
+          setSongProgress({
+            isGenerating: false,
+            stage: 'complete',
+            progress: 100,
+            message: 'Пісню згенеровано успішно!'
+          });
+          
+          toast({
+            title: "Успіх",
+            description: "Пісню успішно згенеровано!",
+          });
+        }
+      } else {
+        // Визначаємо поточний статус для відображення користувачу
+        let statusMessage = "Статус: ";
+        
+        switch(data.data.status) {
+          case 'PENDING':
+            statusMessage += "В очікуванні обробки";
+            break;
+          case 'TEXT_SUCCESS':
+            statusMessage += "Текст оброблено, генерується аудіо";
+            break;
+          case 'FIRST_SUCCESS':
+            statusMessage += "Аудіо майже готове";
+            break;
+          default:
+            statusMessage += data.data.status || "Невідомий статус";
+        }
+        
+        toast({
+          title: "Пісня в обробці",
+          description: `${statusMessage}. Перевірте ще раз пізніше, генерація може зайняти до 5 хвилин.`,
+        });
+      }
+    } catch (error) {
+      console.error('Помилка при перевірці статусу:', error);
+      toast({
+        title: "Помилка",
+        description: "Не вдалося перевірити статус генерації пісні",
+        variant: "destructive",
+      });
+    }
+  };
+  
   if (!apiKeySet) {
     return (
       <ApiKeyInput onApiKeySet={() => setApiKeySet(true)} />
@@ -441,6 +625,20 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
             </div>
             <Progress value={songProgress.progress} className="h-2 mb-2" />
             <p className="text-sm text-muted-foreground">{songProgress.message}</p>
+            <p className="text-xs text-muted-foreground mt-2">Повна генерація пісні може зайняти до 5 хвилин. Ви можете перезавантажити сторінку і повернутися пізніше - прогрес буде збережено.</p>
+            
+            {taskId && songProgress.progress >= 50 && !audioUrl && (
+              <div className="mt-3 text-right">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleManualCheckStatus}
+                  className="text-xs"
+                >
+                  Перевірити статус пісні
+                </Button>
+              </div>
+            )}
           </div>
         )}
         
@@ -480,7 +678,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <h3 className="text-xl font-medium">{userInfo?.name ? `План дій для ${getFullUserName()}` : 'Ваш персоналізований план дій'}</h3>
+                <h3 className="text-xl font-medium overflow-hidden text-ellipsis">{userInfo?.name ? `План дій для ${getFullUserName()}` : 'Ваш персоналізований план дій'}</h3>
                 <p className="text-muted-foreground">Досягніть бажаних цілей крок за кроком</p>
               </div>
               
@@ -496,7 +694,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
             </div>
             
             <div className="p-4 bg-calm-50 rounded-lg border border-calm-100">
-              <p className="font-medium text-sm sm:text-base">{generatedPlan.summary}</p>
+              <p className="font-medium text-sm sm:text-base break-words">{generatedPlan.summary}</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -504,12 +702,12 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
                 <h4 className="text-sm font-medium text-muted-foreground flex items-center">
                   <Clock size={16} className="mr-2" /> Часові рамки
                 </h4>
-                <p className="text-sm sm:text-base">{generatedPlan.timeframe}</p>
+                <p className="text-sm sm:text-base break-words">{generatedPlan.timeframe}</p>
               </div>
               
               <div className="space-y-2">
                 <h4 className="text-sm font-medium text-muted-foreground">Обґрунтування</h4>
-                <p className="text-sm sm:text-base">{generatedPlan.reasoning}</p>
+                <p className="text-sm sm:text-base break-words">{generatedPlan.reasoning}</p>
               </div>
             </div>
             
@@ -528,12 +726,12 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
                       
                       <div className="bg-white p-3 sm:p-4 rounded-lg border border-calm-100 shadow-sm">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-2">
-                          <h4 className="font-medium text-sm sm:text-base">{step.title}</h4>
+                          <h4 className="font-medium text-sm sm:text-base break-words">{step.title}</h4>
                           <span className="text-xs bg-calm-100 text-calm-800 px-2 py-1 rounded-full whitespace-nowrap self-start">
                             {step.timeframe}
                           </span>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground">{step.description}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground break-words">{step.description}</p>
                       </div>
                     </div>
                   ))}
@@ -547,7 +745,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo }: PathGeneratorPr
                   <Music size={18} className="text-primary" />
                   <h4 className="font-medium">Ваша мотиваційна пісня</h4>
                 </div>
-                <audio controls className="w-full">
+                <audio controls className="w-full max-w-full">
                   <source src={audioUrl} type="audio/mpeg" />
                   Ваш браузер не підтримує аудіо елемент.
                 </audio>

@@ -19,10 +19,22 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
   
+  // Перевіряємо, чи є дані сесії користувача
+  useEffect(() => {
+    // Перевірка наявності даних в localStorage
+    const hasSession = localStorage.getItem('currentState') || 
+                       localStorage.getItem('desiredState') || 
+                       localStorage.getItem('userInfo');
+    
+    if (hasSession) {
+      console.log('Знайдено збережену сесію користувача');
+    }
+  }, []);
+  
   return (
     <div className={`min-h-screen flex flex-col transition-opacity duration-700 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
       <Header />
-      <main className="flex-grow">
+      <main className="flex-grow overflow-x-hidden">
         <Hero />
         <CoachingSession />
         <Resources />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,73 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const [pollingInterval, setPollingInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Завантаження даних з localStorage при монтуванні компонента
+  useEffect(() => {
+    try {
+      const savedSongLyrics = localStorage.getItem('songLyrics');
+      const savedAudioUrl = localStorage.getItem('songAudioUrl');
+      const savedTaskId = localStorage.getItem('songTaskId');
+      
+      if (savedSongLyrics) {
+        setSongLyrics(JSON.parse(savedSongLyrics));
+      }
+      
+      if (savedAudioUrl) {
+        setAudioUrl(savedAudioUrl);
+        const newAudio = new Audio(savedAudioUrl);
+        newAudio.addEventListener('ended', () => setIsPlaying(false));
+        setAudio(newAudio);
+      }
+      
+      if (savedTaskId) {
+        setTaskId(savedTaskId);
+        // Якщо є taskId але немає audioUrl, продовжуємо перевіряти статус
+        if (savedTaskId && !savedAudioUrl) {
+          checkTaskStatus(savedTaskId);
+          
+          const interval = window.setInterval(() => {
+            checkTaskStatus(savedTaskId);
+          }, 10000);
+          
+          setPollingInterval(interval);
+        }
+      }
+    } catch (error) {
+      console.error('Помилка при завантаженні даних з localStorage:', error);
+    }
+  }, []);
+
+  // Збереження даних в localStorage при їх зміні
+  useEffect(() => {
+    try {
+      if (songLyrics) {
+        localStorage.setItem('songLyrics', JSON.stringify(songLyrics));
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні songLyrics в localStorage:', error);
+    }
+  }, [songLyrics]);
+
+  useEffect(() => {
+    try {
+      if (audioUrl) {
+        localStorage.setItem('songAudioUrl', audioUrl);
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні audioUrl в localStorage:', error);
+    }
+  }, [audioUrl]);
+
+  useEffect(() => {
+    try {
+      if (taskId) {
+        localStorage.setItem('songTaskId', taskId);
+      }
+    } catch (error) {
+      console.error('Помилка при збереженні taskId в localStorage:', error);
+    }
+  }, [taskId]);
+
   useEffect(() => {
     return () => {
       if (audio) {
@@ -68,29 +136,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       }
     };
   }, [audio, pollingInterval]);
-
-  const handleGenerateLyrics = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    
-    setIsGeneratingLyrics(true);
-    setError(null);
-    setSongLyrics(null);
-    setAudioUrl(null);
-    
-    try {
-      const songData = await generateMotivationalSong(currentState, desiredState, userInfo);
-      setSongLyrics(songData);
-    } catch (err: any) {
-      setError(err.message || "Не вдалося згенерувати текст пісні");
-      toast({
-        title: "Помилка генерації тексту",
-        description: err.message || "Не вдалося згенерувати текст пісні",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGeneratingLyrics(false);
-    }
-  };
 
   const checkTaskStatus = async (taskId: string) => {
     try {
@@ -171,6 +216,29 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     }
   };
 
+  const handleGenerateLyrics = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    
+    setIsGeneratingLyrics(true);
+    setError(null);
+    setSongLyrics(null);
+    setAudioUrl(null);
+    
+    try {
+      const songData = await generateMotivationalSong(currentState, desiredState, userInfo);
+      setSongLyrics(songData);
+    } catch (err: any) {
+      setError(err.message || "Не вдалося згенерувати текст пісні");
+      toast({
+        title: "Помилка генерації тексту",
+        description: err.message || "Не вдалося згенерувати текст пісні",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingLyrics(false);
+    }
+  };
+
   const handleGenerateAudio = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     
@@ -224,7 +292,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         
         const interval = window.setInterval(() => {
           checkTaskStatus(data.data.taskId);
-        }, 5000);
+        }, 10000);
         
         setPollingInterval(interval);
         
@@ -232,7 +300,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         
         toast({
           title: "Запит відправлено",
-          description: "Генерація аудіо пісні розпочалась. Це може зайняти кілька хвилин.",
+          description: "Генерація аудіо пісні розпочалась. Це може зайняти до 5 хвилин.",
         });
       } catch (fetchError: any) {
         if (fetchError.name === 'AbortError') {
@@ -293,6 +361,74 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     ));
   };
 
+  // Функція для конвертації коротких імен у повну форму
+  const getFullName = (name: string): string => {
+    const nameMap: Record<string, string> = {
+      'Саша (ч)': 'Олександр',
+      'Саша (ж)': 'Олександра',
+      'Гріша': 'Григорій',
+      'Міша': 'Михайло',
+      'Діма': 'Дмитро',
+      'Коля': 'Микола',
+      'Ваня': 'Іван',
+      'Катя': 'Катерина',
+      'Женя (ч)': 'Євген',
+      'Женя (ж)': 'Євгенія',
+      'Юля': 'Юлія',
+      'Вова': 'Володимир',
+      'Толя': 'Анатолій',
+      'Льоша': 'Олексій',
+      'Віка': 'Вікторія',
+      'Роза': 'Розалія',
+      'Таня': 'Тетяна',
+      'Лєна': 'Олена',
+      'Надя': 'Надія',
+      'Оля': 'Ольга',
+      'Петя': 'Петро',
+      'Валя (ч)': 'Валентин',
+      'Валя (ж)': 'Валентина',
+      'Соня': 'Софія',
+      'Андрій': 'Андрій',
+      'Максим': 'Максим',
+      'Рома': 'Роман',
+      'Сергій': 'Сергій',
+      'Паша': 'Павло',
+      'Маша': 'Марія',
+      'Аня': 'Анна',
+      'Наталя': 'Наталія',
+      'Іра': 'Ірина',
+      'Галя': 'Галина',
+      'Люда': 'Людмила',
+      'Зіна': 'Зінаїда',
+      'Боря': 'Борис',
+      'Костя': 'Костянтин',
+      'Слава': 'В\'ячеслав'
+    };
+
+    // Якщо знайдено коротку форму імені в списку, повертаємо повну форму
+    return nameMap[name] || name;
+  };
+
+  const getFullUserName = () => {
+    if (!userInfo || !userInfo.name) return 'користувача';
+    return getFullName(userInfo.name);
+  };
+
+  // Кнопка для ручного оновлення статусу пісні
+  const handleManualCheckStatus = async () => {
+    if (!taskId) return;
+    
+    try {
+      await checkTaskStatus(taskId);
+      toast({
+        title: "Перевірка",
+        description: "Статус пісні перевірено. Процес може тривати до 5 хвилин.",
+      });
+    } catch (error) {
+      console.error('Помилка при перевірці статусу:', error);
+    }
+  };
+
   return (
     <Card className="w-full border-calm-100 shadow-sm">
       <CardHeader className="bg-calm-50 border-b border-calm-100">
@@ -305,7 +441,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -315,7 +451,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         )}
         
         {!songLyrics ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
             <div className="mb-6 text-muted-foreground max-w-md">
               <p>Натисніть кнопку нижче, щоб створити персоналізовану мотиваційну пісню, яка допоможе вам досягти бажаного стану.</p>
             </div>
@@ -342,16 +478,16 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         ) : (
           <div className="space-y-6">
             <Tabs defaultValue="lyrics" className="w-full">
-              <TabsList>
+              <TabsList className="w-full overflow-x-auto">
                 <TabsTrigger value="lyrics">Текст пісні</TabsTrigger>
                 <TabsTrigger value="audio" disabled={!audioUrl}>Аудіо</TabsTrigger>
               </TabsList>
               
               <TabsContent value="lyrics" className="p-4 border rounded-md mt-4">
                 <div className="mb-4">
-                  <h3 className="text-xl font-medium mb-2">{songLyrics.title}</h3>
+                  <h3 className="text-xl font-medium mb-2 break-words">{songLyrics.title}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Персоналізована пісня для {userInfo.name}
+                    Персоналізована пісня для {getFullUserName()}
                   </p>
                 </div>
                 
@@ -363,24 +499,33 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                 
                 {!audioUrl && (
                   <div className="mt-6">
-                    <Button 
-                      onClick={handleGenerateAudio}
-                      disabled={isGeneratingAudio}
-                      className="w-full"
-                      type="button"
-                    >
-                      {isGeneratingAudio ? (
-                        <>
-                          <Loader2 size={20} className="mr-2 animate-spin" />
-                          Створюємо аудіо...
-                        </>
-                      ) : (
-                        <>
-                          <Music size={20} className="mr-2" />
-                          Створити аудіо пісні
-                        </>
-                      )}
-                    </Button>
+                    {isGeneratingAudio ? (
+                      <div className="text-center space-y-2">
+                        <Loader2 size={24} className="mx-auto animate-spin" />
+                        <p className="text-sm text-muted-foreground">Створюємо аудіо (може зайняти до 5 хвилин)...</p>
+                        
+                        {taskId && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={handleManualCheckStatus}
+                            className="mt-2"
+                          >
+                            Перевірити статус
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={handleGenerateAudio}
+                        disabled={isGeneratingAudio}
+                        className="w-full"
+                        type="button"
+                      >
+                        <Music size={20} className="mr-2" />
+                        Створити аудіо пісні
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>
@@ -389,9 +534,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                 {audioUrl && (
                   <div className="space-y-6">
                     <div className="text-center">
-                      <h3 className="text-xl font-medium mb-2">{songLyrics.title}</h3>
+                      <h3 className="text-xl font-medium mb-2 break-words">{songLyrics.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Персоналізована пісня для {userInfo.name}
+                        Персоналізована пісня для {getFullUserName()}
                       </p>
                     </div>
                     
@@ -427,7 +572,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       </CardContent>
 
       {songLyrics && (
-        <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-between">
+        <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-between flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={handleGenerateLyrics}

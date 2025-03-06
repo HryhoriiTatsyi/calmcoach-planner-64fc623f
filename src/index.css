@@ -113,6 +113,11 @@
     textarea, input[type="text"] {
       @apply text-sm;
     }
+    
+    /* Додаємо автоматичний перенос слів для малих екранів */
+    p, h1, h2, h3, h4, h5, h6, span {
+      @apply break-words;
+    }
   }
 }
 
@@ -122,7 +127,7 @@
   }
   
   .section-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-24;
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-20;
   }
   
   .input-field {
@@ -156,7 +161,7 @@
   
   /* Додаткові адаптивні класи */
   .responsive-padding {
-    @apply px-4 sm:px-6 md:px-8 py-3 sm:py-4 md:py-5;
+    @apply px-3 sm:px-6 md:px-8 py-2 sm:py-4 md:py-5;
   }
   
   .responsive-grid {
@@ -184,6 +189,16 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-calm-200 rounded-full;
   }
+  
+  .break-words {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .overflow-x-auto {
+    overflow-x: auto;
+  }
 }
 
 /* Анімації */
@@ -204,5 +219,30 @@
   
   textarea {
     min-height: 100px;
+  }
+  
+  .mobile-padding {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  .mobile-text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .mobile-hidden {
+    display: none;
+  }
+  
+  .tabs-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 768px) {
+  .desktop-hidden {
+    display: none;
   }
 }

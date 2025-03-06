@@ -35,25 +35,25 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
       </CardHeader>
       <CardContent className="p-0">
         <Tabs defaultValue="emotional" className="w-full">
-          <TabsList className="w-full justify-start p-0 rounded-none bg-calm-50/50 border-b border-calm-100">
-            <TabsTrigger value="emotional" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Heart size={16} className="mr-2" /> Емоційний
+          <TabsList className="w-full flex overflow-x-auto justify-start p-0 rounded-none bg-calm-50/50 border-b border-calm-100">
+            <TabsTrigger value="emotional" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary whitespace-nowrap flex-shrink-0">
+              <Heart size={16} className="mr-2 md:mr-2 flex-shrink-0" /> <span className="hidden sm:inline">Емоційний</span><span className="sm:hidden">Емоц.</span>
             </TabsTrigger>
-            <TabsTrigger value="mental" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Brain size={16} className="mr-2" /> Ментальний
+            <TabsTrigger value="mental" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary whitespace-nowrap flex-shrink-0">
+              <Brain size={16} className="mr-2 md:mr-2 flex-shrink-0" /> <span className="hidden sm:inline">Ментальний</span><span className="sm:hidden">Мент.</span>
             </TabsTrigger>
-            <TabsTrigger value="career" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Briefcase size={16} className="mr-2" /> Кар'єрний
+            <TabsTrigger value="career" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary whitespace-nowrap flex-shrink-0">
+              <Briefcase size={16} className="mr-2 md:mr-2 flex-shrink-0" /> <span className="hidden sm:inline">Кар'єрний</span><span className="sm:hidden">Кар'єра</span>
             </TabsTrigger>
-            <TabsTrigger value="relationships" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Users size={16} className="mr-2" /> Стосунки
+            <TabsTrigger value="relationships" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary whitespace-nowrap flex-shrink-0">
+              <Users size={16} className="mr-2 md:mr-2 flex-shrink-0" /> <span className="hidden sm:inline">Стосунки</span><span className="sm:hidden">Стос.</span>
             </TabsTrigger>
-            <TabsTrigger value="physical" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary">
-              <Activity size={16} className="mr-2" /> Фізичний
+            <TabsTrigger value="physical" className="data-[state=active]:bg-white rounded-none border-b-2 border-transparent data-[state=active]:border-primary whitespace-nowrap flex-shrink-0">
+              <Activity size={16} className="mr-2 md:mr-2 flex-shrink-0" /> <span className="hidden sm:inline">Фізичний</span><span className="sm:hidden">Фіз.</span>
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="emotional" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="emotional" className="p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
               <Label htmlFor="emotional-state">Як ви почуваєтеся емоційно?</Label>
               <Textarea 
@@ -66,7 +66,7 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
             </div>
           </TabsContent>
           
-          <TabsContent value="mental" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="mental" className="p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
               <Label htmlFor="mental-state">Який ваш ментальний стан?</Label>
               <Textarea 
@@ -79,7 +79,7 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
             </div>
           </TabsContent>
           
-          <TabsContent value="career" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="career" className="p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
               <Label htmlFor="career-state">Як ваша кар'єра чи професійне життя?</Label>
               <Textarea 
@@ -92,7 +92,7 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
             </div>
           </TabsContent>
           
-          <TabsContent value="relationships" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="relationships" className="p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
               <Label htmlFor="relationships-state">Як ваші стосунки?</Label>
               <Textarea 
@@ -105,7 +105,7 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
             </div>
           </TabsContent>
           
-          <TabsContent value="physical" className="p-6 focus-visible:outline-none focus-visible:ring-0">
+          <TabsContent value="physical" className="p-4 sm:p-6 focus-visible:outline-none focus-visible:ring-0">
             <div className="space-y-4">
               <Label htmlFor="physical-state">Як ваше фізичне здоров'я?</Label>
               <Textarea 
@@ -118,7 +118,7 @@ const CurrentState = ({ data, onChange }: CurrentStateProps) => {
             </div>
           </TabsContent>
           
-          <div className="p-6 border-t border-calm-100">
+          <div className="p-4 sm:p-6 border-t border-calm-100">
             <div className="space-y-4">
               <Label htmlFor="needs" className="font-medium">Які конкретні потреби чи проблеми ви хотіли б вирішити?</Label>
               <Textarea 

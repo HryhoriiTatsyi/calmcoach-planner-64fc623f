@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
 import CurrentState from './CurrentState';
@@ -32,6 +32,56 @@ const CoachingSession = () => {
   
   const [showTest, setShowTest] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  
+  // Завантаження даних з localStorage при монтуванні компонента
+  useEffect(() => {
+    try {
+      const savedCurrentState = localStorage.getItem('currentState');
+      const savedDesiredState = localStorage.getItem('desiredState');
+      const savedUserInfo = localStorage.getItem('userInfo');
+      
+      if (savedCurrentState) {
+        setCurrentState(JSON.parse(savedCurrentState));
+      }
+      
+      if (savedDesiredState) {
+        setDesiredState(JSON.parse(savedDesiredState));
+      }
+      
+      if (savedUserInfo) {
+        setUserInfo(JSON.parse(savedUserInfo));
+      }
+    } catch (error) {
+      console.error('Помилка при завантаженні даних з localStorage:', error);
+    }
+  }, []);
+  
+  // Збереження даних в localStorage при їх зміні
+  useEffect(() => {
+    try {
+      localStorage.setItem('currentState', JSON.stringify(currentState));
+    } catch (error) {
+      console.error('Помилка при збереженні currentState в localStorage:', error);
+    }
+  }, [currentState]);
+  
+  useEffect(() => {
+    try {
+      localStorage.setItem('desiredState', JSON.stringify(desiredState));
+    } catch (error) {
+      console.error('Помилка при збереженні desiredState в localStorage:', error);
+    }
+  }, [desiredState]);
+  
+  useEffect(() => {
+    if (userInfo) {
+      try {
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+      } catch (error) {
+        console.error('Помилка при збереженні userInfo в localStorage:', error);
+      }
+    }
+  }, [userInfo]);
   
   const handleTestComplete = (result: { 
     currentState: { 
