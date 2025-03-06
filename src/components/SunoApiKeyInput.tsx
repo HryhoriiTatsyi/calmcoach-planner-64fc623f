@@ -25,6 +25,7 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
     
     if (envApiKey) {
       // Якщо ключ є в змінних середовища, автоматично переходимо далі
+      localStorage.setItem('suno_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
       onApiKeySet();
       return;
     } else if (storedKey) {

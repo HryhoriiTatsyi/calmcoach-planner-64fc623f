@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const [pollingInterval, setPollingInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Завантаження даних з localStorage при монтуванні компонента
   useEffect(() => {
     try {
       const savedSongLyrics = localStorage.getItem('songLyrics');
@@ -77,7 +75,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       
       if (savedTaskId) {
         setTaskId(savedTaskId);
-        // Якщо є taskId але немає audioUrl, продовжуємо перевіряти статус
         if (savedTaskId && !savedAudioUrl) {
           checkTaskStatus(savedTaskId);
           
@@ -93,7 +90,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     }
   }, []);
 
-  // Збереження даних в localStorage при їх зміні
   useEffect(() => {
     try {
       if (songLyrics) {
@@ -145,6 +141,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
       }
       
+      console.log('Перевіряємо статус завдання з ID:', taskId);
+      console.log('Використовуємо API ключ Suno:', sunoApiKey.substring(0, 5) + '...');
+      
       const response = await fetch(`https://apibox.erweima.ai/api/v1/generate/record-info?taskId=${taskId}`, {
         method: 'GET',
         headers: {
@@ -154,12 +153,17 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         }
       });
       
+      console.log('Статус відповіді:', response.status);
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+        const errorText = await response.text();
+        console.error('Помилка відповіді API:', errorText);
+        const errorData = JSON.parse(errorText);
         throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
       }
       
       const data: TaskDetailsResponse = await response.json();
+      console.log('Дані відповіді:', data);
       
       if (data.code !== 200) {
         throw new Error(`Помилка API: ${data.msg}`);
@@ -168,6 +172,8 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       if (data.data?.status === 'SUCCESS' && data.data.response?.sunoData && data.data.response.sunoData.length > 0) {
         const audioData = data.data.response.sunoData[0];
         const url = audioData.audioUrl || audioData.streamAudioUrl;
+        
+        console.log('Отримано URL аудіо:', url);
         
         if (url) {
           setAudioUrl(url);
@@ -181,6 +187,8 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           }
           
           setIsGeneratingAudio(false);
+          localStorage.setItem('songAudioUrl', url);
+          
           toast({
             title: "Успішно",
             description: "Аудіо пісню згенеровано успішно!",
@@ -201,6 +209,8 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         throw new Error(`Помилка при генерації аудіо: ${data.data.status}`);
       }
     } catch (err: any) {
+      console.error('Помилка при перевірці статусу завдання:', err);
+      
       if (pollingInterval) {
         clearInterval(pollingInterval);
         setPollingInterval(null);
@@ -225,9 +235,14 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     setAudioUrl(null);
     
     try {
+      console.log('Генеруємо текст пісні для:', userInfo.name);
       const songData = await generateMotivationalSong(currentState, desiredState, userInfo);
+      console.log('Отримано текст пісні:', songData.title);
+      
       setSongLyrics(songData);
+      localStorage.setItem('songLyrics', JSON.stringify(songData));
     } catch (err: any) {
+      console.error('Помилка при генерації тексту пісні:', err);
       setError(err.message || "Не вдалося згенерувати текст пісні");
       toast({
         title: "Помилка генерації тексту",
@@ -242,7 +257,10 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   const handleGenerateAudio = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     
-    if (!songLyrics) return;
+    if (!songLyrics) {
+      console.error('Немає тексту пісні для генерації аудіо');
+      return;
+    }
     
     setIsGeneratingAudio(true);
     setError(null);
@@ -253,6 +271,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       if (!sunoApiKey) {
         throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
       }
+      
+      console.log('Використовуємо API ключ Suno:', sunoApiKey.substring(0, 5) + '...');
+      console.log('Починаємо генерацію аудіо для пісні:', songLyrics.title);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -277,18 +298,25 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           signal: controller.signal
         }).finally(() => clearTimeout(timeoutId));
         
+        console.log('Статус відповіді:', response.status);
+        
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ msg: response.statusText }));
+          const errorText = await response.text();
+          console.error('Помилка відповіді API:', errorText);
+          const errorData = JSON.parse(errorText);
           throw new Error(`Помилка API: ${errorData.msg || response.statusText}`);
         }
         
         const data: TaskResponse = await response.json();
+        console.log('Дані відповіді:', data);
         
         if (data.code !== 200 || !data.data?.taskId) {
           throw new Error(`Помилка API: ${data.msg || 'Невідома помилка'}`);
         }
         
+        console.log('Отримано ID завдання:', data.data.taskId);
         setTaskId(data.data.taskId);
+        localStorage.setItem('songTaskId', data.data.taskId);
         
         const interval = window.setInterval(() => {
           checkTaskStatus(data.data.taskId);
@@ -303,6 +331,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           description: "Генерація аудіо пісні розпочалась. Це може зайняти до 5 хвилин.",
         });
       } catch (fetchError: any) {
+        console.error('Помилка запиту до API:', fetchError);
         if (fetchError.name === 'AbortError') {
           throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуйте ще раз.');
         } else if (fetchError.message === 'Failed to fetch') {
@@ -312,6 +341,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         }
       }
     } catch (err: any) {
+      console.error('Загальна помилка при генерації аудіо:', err);
       setError(err.message || "Не вдалося згенерувати аудіо пісні");
       setIsGeneratingAudio(false);
       
@@ -361,7 +391,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     ));
   };
 
-  // Функція для конвертації коротких імен у повну форму
   const getFullName = (name: string): string => {
     const nameMap: Record<string, string> = {
       'Саша (ч)': 'Олександр',
@@ -404,8 +433,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       'Костя': 'Костянтин',
       'Слава': 'В\'ячеслав'
     };
-
-    // Якщо знайдено коротку форму імені в списку, повертаємо повну форму
+    
     return nameMap[name] || name;
   };
 
@@ -414,7 +442,6 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     return getFullName(userInfo.name);
   };
 
-  // Кнопка для ручного оновлення статусу пісні
   const handleManualCheckStatus = async () => {
     if (!taskId) return;
     
