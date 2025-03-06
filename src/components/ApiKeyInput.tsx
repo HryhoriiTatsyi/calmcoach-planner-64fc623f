@@ -12,12 +12,20 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Перевіряємо наявність ключа в env або localStorage
+    const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
     const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey) {
+    
+    if (envApiKey) {
+      // Якщо ключ є в змінних середовища, автоматично переходимо далі
+      onApiKeySet();
+      return;
+    } else if (savedKey) {
+      // Якщо ключа немає в env, але є в localStorage
       setApiKey(savedKey);
       setIsSaved(true);
     }
-  }, []);
+  }, [onApiKeySet]);
 
   const handleSaveKey = () => {
     if (apiKey.trim()) {
@@ -55,6 +63,9 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
           <p className="text-muted-foreground">
             Введіть свій API-ключ OpenAI для доступу до функцій генерації тесту та плану. 
             Ваш ключ зберігається локально у вашому браузері і не передається нікуди, крім API OpenAI.
+          </p>
+          <p className="text-sm text-green-600">
+            Альтернативно, ви можете додати ключ у файл .env як VITE_OPENAI_API_KEY.
           </p>
           
           <div className="flex items-center gap-2">

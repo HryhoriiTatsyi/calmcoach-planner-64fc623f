@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -97,8 +96,15 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
   const [testCompleted, setTestCompleted] = useState(false);
   const [showUserInfo, setShowUserInfo] = useState(true);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
+  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key') || !!import.meta.env.VITE_OPENAI_API_KEY);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+    if (envApiKey && !apiKeySet) {
+      setApiKeySet(true);
+    }
+  }, [apiKeySet]);
   
   const handleAnswer = (questionId: number, answerIndex: number) => {
     setAnswers(prev => ({
@@ -146,7 +152,6 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     setIsGenerating(true);
     
     try {
-      // Використовуємо OpenAI API для аналізу результатів тесту
       const result = await generateMentalHealthTest(answers, userInfo);
       
       setIsGenerating(false);

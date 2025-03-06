@@ -20,11 +20,17 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
   
   useEffect(() => {
     // Перевіряємо наявність ключа при завантаженні компонента
+    const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
     const storedKey = localStorage.getItem('suno_api_key');
-    if (storedKey) {
+    
+    if (envApiKey) {
+      // Якщо ключ є в змінних середовища, автоматично переходимо далі
+      onApiKeySet();
+      return;
+    } else if (storedKey) {
       setApiKey(storedKey);
     }
-  }, []);
+  }, [onApiKeySet]);
   
   const validateApiKey = async (key: string) => {
     try {
@@ -134,6 +140,9 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
             />
             <p className="text-xs text-muted-foreground">
               Ваш ключ API зберігається лише локально у вашому браузері і ніколи не передається на наші сервери.
+            </p>
+            <p className="text-xs text-green-600">
+              Альтернативно, ви можете додати ключ у файл .env як VITE_SUNO_API_KEY.
             </p>
           </div>
         </CardContent>

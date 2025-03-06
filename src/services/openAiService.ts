@@ -1,3 +1,4 @@
+
 import OpenAI from "openai";
 
 export interface UserInfo {
@@ -37,6 +38,30 @@ export interface GeneratedPlan {
   steps: Step[];
 }
 
+// Функція для отримання ключа OpenAI
+const getOpenAiKey = (): string => {
+  const envKey = import.meta.env.VITE_OPENAI_API_KEY;
+  const localKey = localStorage.getItem('openai_api_key');
+  
+  if (!envKey && !localKey) {
+    throw new Error('API ключ не знайдено. Будь ласка, додайте VITE_OPENAI_API_KEY в .env файл або введіть ключ у відповідному полі.');
+  }
+  
+  return envKey || localKey as string;
+};
+
+// Функція для отримання ключа Suno
+const getSunoKey = (): string => {
+  const envKey = import.meta.env.VITE_SUNO_API_KEY;
+  const localKey = localStorage.getItem('suno_api_key');
+  
+  if (!envKey && !localKey) {
+    throw new Error('API ключ Suno не знайдено. Будь ласка, додайте VITE_SUNO_API_KEY в .env файл або введіть ключ у відповідному полі.');
+  }
+  
+  return envKey || localKey as string;
+};
+
 // Функція для генерації персоналізованого плану дій
 export const generateActionPlan = async (
   currentState: CurrentStateData,
@@ -44,12 +69,8 @@ export const generateActionPlan = async (
   userInfo: UserInfo
 ): Promise<GeneratedPlan> => {
   try {
-    const apiKey = localStorage.getItem('openai_api_key');
+    const apiKey = getOpenAiKey();
     
-    if (!apiKey) {
-      throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
-    }
-
     const openai = new OpenAI({
       apiKey,
       dangerouslyAllowBrowser: true
@@ -146,12 +167,8 @@ export const generateMotivationalSong = async (
   userInfo: UserInfo
 ): Promise<{ title: string; lyrics: string }> => {
   try {
-    const apiKey = localStorage.getItem('openai_api_key');
+    const apiKey = getOpenAiKey();
     
-    if (!apiKey) {
-      throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
-    }
-
     const openai = new OpenAI({
       apiKey,
       dangerouslyAllowBrowser: true
@@ -253,12 +270,8 @@ export const generateMentalHealthTest = async (
   };
 }> => {
   try {
-    const apiKey = localStorage.getItem('openai_api_key');
+    const apiKey = getOpenAiKey();
     
-    if (!apiKey) {
-      throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
-    }
-
     const openai = new OpenAI({
       apiKey,
       dangerouslyAllowBrowser: true

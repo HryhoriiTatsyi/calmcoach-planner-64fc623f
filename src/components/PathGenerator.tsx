@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Clock, Download, Loader2, AlertCircle, Music, UserCircle } from 'lucide-react';
 import { CurrentStateData } from './CurrentState';
 import { DesiredStateData } from './DesiredState';
@@ -90,8 +89,8 @@ const getFullName = (name: string): string => {
 const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo }: PathGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedPlan | null>(null);
-  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key'));
-  const [sunoApiKeySet, setSunoApiKeySet] = useState(!!localStorage.getItem('suno_api_key'));
+  const [apiKeySet, setApiKeySet] = useState(!!localStorage.getItem('openai_api_key') || !!import.meta.env.VITE_OPENAI_API_KEY);
+  const [sunoApiKeySet, setSunoApiKeySet] = useState(!!localStorage.getItem('suno_api_key') || !!import.meta.env.VITE_SUNO_API_KEY);
   const [error, setError] = useState<string | null>(null);
   const [songProgress, setSongProgress] = useState<SongProgress | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -439,7 +438,9 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
         description: "Ваш персоналізований план дій готовий. Розпочалась генерація бонусної пісні!",
       });
       
-      generateSongAfterPlan();
+      if (sunoApiKeySet) {
+        generateSongAfterPlan();
+      }
       
     } catch (error: any) {
       setError(error.message || "Не вдалося згенерувати план. Перевірте свій API-ключ та спробуйте знову.");
