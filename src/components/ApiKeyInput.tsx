@@ -13,30 +13,41 @@ const ApiKeyInput = ({ onApiKeySet }: { onApiKeySet: () => void }) => {
 
   useEffect(() => {
     // Перевіряємо наявність ключа в env або localStorage
-    const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
-    const savedKey = localStorage.getItem('openai_api_key');
+    const checkAndSetApiKey = () => {
+      try {
+        console.log('ApiKeyInput: Починаємо перевірку ключів');
+        
+        // Спочатку перевіряємо змінну середовища
+        const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
+        
+        if (envApiKey) {
+          console.log('ApiKeyInput: Знайдено ключ у змінних середовища');
+          // Зберігаємо env ключ в localStorage для подальшого використання
+          localStorage.setItem('openai_api_key', envApiKey);
+          setApiKey(envApiKey);
+          setIsSaved(true);
+          onApiKeySet();
+          return;
+        }
+        
+        // Якщо ENV ключ не знайдено, перевіряємо localStorage
+        const savedKey = localStorage.getItem('openai_api_key');
+        
+        if (savedKey) {
+          console.log('ApiKeyInput: Знайдено збережений ключ у localStorage');
+          setApiKey(savedKey);
+          setIsSaved(true);
+          onApiKeySet();
+          return;
+        }
+        
+        console.log('ApiKeyInput: Ключ не знайдено ні в ENV, ні в localStorage');
+      } catch (err) {
+        console.error('ApiKeyInput: Помилка при перевірці ключів:', err);
+      }
+    };
     
-    console.log('ApiKeyInput: Перевірка ключів', { 
-      envKeyExists: !!envApiKey, 
-      savedKeyExists: !!savedKey 
-    });
-    
-    if (envApiKey) {
-      // Якщо ключ є в змінних середовища, автоматично переходимо далі
-      console.log('ApiKeyInput: Знайдено ключ у змінних середовища');
-      localStorage.setItem('openai_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
-      setApiKey(envApiKey);
-      setIsSaved(true);
-      onApiKeySet();
-    } else if (savedKey) {
-      // Якщо ключа немає в env, але є в localStorage
-      console.log('ApiKeyInput: Знайдено збережений ключ у localStorage');
-      setApiKey(savedKey);
-      setIsSaved(true);
-      onApiKeySet();
-    } else {
-      console.log('ApiKeyInput: Ключ не знайдено');
-    }
+    checkAndSetApiKey();
   }, [onApiKeySet]);
 
   const handleSaveKey = () => {

@@ -20,39 +20,71 @@ const SunoApiKeyInput = ({ onApiKeySet }: SunoApiKeyInputProps) => {
   
   useEffect(() => {
     // Перевіряємо наявність ключа при завантаженні компонента
-    const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
-    const storedKey = localStorage.getItem('suno_api_key');
-    
-    console.log('SunoApiKeyInput: Перевірка ключів', { 
-      envKeyExists: !!envApiKey, 
-      storedKeyExists: !!storedKey 
-    });
-    
-    if (envApiKey) {
-      // Якщо ключ є в змінних середовища, автоматично переходимо далі
-      console.log('SunoApiKeyInput: Знайдено ключ у змінних середовища');
-      localStorage.setItem('suno_api_key', envApiKey); // Зберігаємо ключ в localStorage для використання в API
-      onApiKeySet();
-      return;
-    } else if (storedKey) {
-      console.log('SunoApiKeyInput: Знайдено збережений ключ у localStorage');
-      setApiKey(storedKey);
-      // Перевіряємо валідність збереженого ключа
-      validateApiKey(storedKey)
-        .then(isValid => {
-          if (isValid) {
-            console.log('SunoApiKeyInput: Збережений ключ валідний, переходимо далі');
-            onApiKeySet();
-          } else {
-            console.log('SunoApiKeyInput: Збережений ключ невалідний');
+    // Перші перевіряємо env змінну, потім localStorage
+    const checkAndSetApiKey = async () => {
+      try {
+        console.log('SunoApiKeyInput: Починаємо перевірку ключів');
+        
+        // Спочатку перевіряємо змінну середовища
+        const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
+        
+        if (envApiKey) {
+          console.log('SunoApiKeyInput: Знайдено ключ у змінних середовища');
+          // Зберігаємо env ключ в localStorage для подальшого використання
+          localStorage.setItem('suno_api_key', envApiKey);
+          setApiKey(envApiKey);
+          
+          // Перевіряємо валідність ключа з env
+          try {
+            const isValid = await validateApiKey(envApiKey);
+            if (isValid) {
+              console.log('SunoApiKeyInput: ENV ключ валідний, переходимо далі');
+              onApiKeySet();
+              return;
+            } else {
+              console.error('SunoApiKeyInput: ENV ключ невалідний');
+              setError('Ключ API з середовища невалідний. Будь ласка, введіть коректний ключ.');
+            }
+          } catch (err) {
+            console.error('SunoApiKeyInput: Помилка перевірки ENV ключа:', err);
           }
-        })
-        .catch(err => {
-          console.error('SunoApiKeyInput: Помилка перевірки збереженого ключа:', err);
-        });
-    } else {
-      console.log('SunoApiKeyInput: Ключ не знайдено');
-    }
+        } else {
+          console.log('SunoApiKeyInput: Ключ не знайдено в ENV змінних');
+        }
+        
+        // Якщо ENV ключ не знайдено або невалідний, перевіряємо localStorage
+        const storedKey = localStorage.getItem('suno_api_key');
+        
+        if (storedKey) {
+          console.log('SunoApiKeyInput: Знайдено збережений ключ у localStorage');
+          setApiKey(storedKey);
+          
+          // Перевіряємо валідність збереженого ключа
+          try {
+            const isValid = await validateApiKey(storedKey);
+            if (isValid) {
+              console.log('SunoApiKeyInput: Збережений ключ валідний, переходимо далі');
+              onApiKeySet();
+              return;
+            } else {
+              console.error('SunoApiKeyInput: Збережений ключ невалідний');
+              setError('Збережений ключ API невалідний. Будь ласка, введіть коректний ключ.');
+              localStorage.removeItem('suno_api_key'); // Видаляємо невалідний ключ
+            }
+          } catch (err) {
+            console.error('SunoApiKeyInput: Помилка перевірки збереженого ключа:', err);
+          }
+        } else {
+          console.log('SunoApiKeyInput: Ключ не знайдено в localStorage');
+        }
+        
+        console.log('SunoApiKeyInput: Не знайдено валідний ключ ні в ENV, ні в localStorage');
+      } catch (err) {
+        console.error('SunoApiKeyInput: Загальна помилка при перевірці ключів:', err);
+      }
+    };
+    
+    checkAndSetApiKey();
   }, [onApiKeySet]);
   
   const validateApiKey = async (key: string) => {

@@ -296,20 +296,22 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
   };
   
   const generateAudio = async (songData: { title: string, lyrics: string }) => {
+    console.log('PathGenerator: Починаємо генерацію аудіо');
+    
     const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
     if (envApiKey) {
-      console.log('Використовуємо ключ Suno API з ENV змінних');
+      console.log('PathGenerator: Використовуємо ключ Suno API з ENV змінних');
       localStorage.setItem('suno_api_key', envApiKey);
     }
     
-    const sunoApiKey = localStorage.getItem('suno_api_key');
+    const sunoApiKey = envApiKey || localStorage.getItem('suno_api_key');
     
     if (!sunoApiKey) {
-      console.error('Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
+      console.error('PathGenerator: Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
       throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
     }
     
-    console.log('Знайдено Suno API ключ, починаємо генерацію аудіо');
+    console.log('PathGenerator: Знайдено Suno API ключ, починаємо генерацію аудіо');
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -412,7 +414,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
     if (!apiKeySet) {
       toast({
         title: "API-ключ відсутній",
-        description: "Будь ласка, введіть свій API-ключ OpenAI для продовження",
+        description: "Будь ласка, введіть ��вій API-ключ OpenAI для продовження",
         variant: "destructive",
       });
       return;
@@ -501,19 +503,24 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
   };
   
   const handleManualCheckStatus = async () => {
+    console.log('PathGenerator: Починаємо перевірку статусу пісні');
+    
     const envApiKey = import.meta.env.VITE_SUNO_API_KEY;
     if (envApiKey) {
-      console.log('Використовуємо ключ Suno API з ENV змінних для перевірки статусу');
+      console.log('PathGenerator: Використовуємо ключ Suno API з ENV змінних для перевірки статусу');
       localStorage.setItem('suno_api_key', envApiKey);
     }
     
-    const sunoApiKey = localStorage.getItem('suno_api_key');
+    const sunoApiKey = envApiKey || localStorage.getItem('suno_api_key');
     
-    if (!taskId) return;
+    if (!taskId) {
+      console.error('PathGenerator: Відсутній taskId для перевірки статусу');
+      return;
+    }
     
     try {
       if (!sunoApiKey) {
-        console.error('Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
+        console.error('PathGenerator: Suno API ключ не знайдено ні в ENV змінних, ні в localStorage');
         toast({
           title: "Помилка",
           description: "API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.",
@@ -596,6 +603,41 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
       toast({
         title: "Помилка",
         description: "Не вдалося перевірити статус генерації пісні",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const downloadAudio = async (url: string, filename: string) => {
+    try {
+      console.log('PathGenerator: Починаємо завантаження аудіо з URL:', url);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('Не вдалося завантажити аудіофайл');
+      }
+      
+      const blob = await response.blob();
+      
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+        document.body.removeChild(a);
+      }, 100);
+      
+      console.log('PathGenerator: Завантаження аудіо успішно завершено');
+    } catch (error) {
+      console.error('PathGenerator: Помилка при завантаженні аудіо:', error);
+      toast({
+        title: "Помилка завантаження",
+        description: "Не вдалося завантажити аудіофайл. Спробуйте ще раз або скопіюйте посилання вручну.",
         variant: "destructive",
       });
     }
@@ -749,14 +791,7 @@ const PathGenerator = ({ currentState, desiredState, userInfo, onUpdateUserInfo 
                     variant="link" 
                     size="sm" 
                     className="text-primary" 
-                    onClick={() => {
-                      const a = document.createElement('a');
-                      a.href = audioUrl;
-                      a.download = `Мотиваційна_пісня_для_${getFullUserName()}.mp3`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }}
+                    onClick={() => downloadAudio(audioUrl, `Мотиваційна_пісня_для_${getFullUserName()}.mp3`)}
                   >
                     <Download size={16} className="mr-1" /> Завантажити пісню
                   </Button>
