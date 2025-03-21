@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -289,7 +288,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           },
           body: JSON.stringify({
             prompt: songLyrics.lyrics,
-            style: "Pop Rock",  // Changed to Pop Rock
+            style: "Pop Rock",
             title: songLyrics.title,
             customMode: true,
             instrumental: false,
@@ -386,24 +385,19 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     
     console.log('Починаємо завантаження аудіо з URL:', audioUrl);
     
-    // Створюємо тимчасовий елемент для завантаження
     fetch(audioUrl)
       .then(response => response.blob())
       .then(blob => {
-        // Створюємо об'єкт URL для blob
         const url = window.URL.createObjectURL(blob);
         
-        // Створюємо тимчасовий елемент для завантаження
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
         a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
         
-        // Додаємо елемент до DOM, викликаємо клік і видаляємо
         document.body.appendChild(a);
         a.click();
         
-        // Очищення
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
@@ -521,7 +515,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
             <div className="bg-primary/5 p-5 rounded-xl mb-6 max-w-md border border-primary/20 shadow-sm">
               <Sparkles size={28} className="text-primary mx-auto mb-3" />
               <p className="text-base">
-                Натисни кнопку нижче, щоб створити свою унікальну мотиваційну пісню в стилі поп-рок, 
+                Натисни кнопку нижче, щоб створити ��вою унікальну мотиваційну пісню в стилі поп-рок, 
                 яка допоможе тобі досягти бажаного стану.
               </p>
             </div>
@@ -670,7 +664,8 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         </CardFooter>
       )}
 
-      <style jsx>{`
+      <style>
+        {`
         .animated-gradient {
           position: relative;
           overflow: hidden;
@@ -700,9 +695,11 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
             background-position: 0% 50%;
           }
         }
-      `}</style>
+        `}
+      </style>
     </Card>
   );
 };
 
 export default SongGenerator;
+
