@@ -8,8 +8,9 @@ import PathGenerator from './PathGenerator';
 import MentalHealthTest from './MentalHealthTest';
 import SongGenerator from './SongGenerator';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit, UserRound, Music } from 'lucide-react';
+import { BrainCircuit, UserRound, Music, RefreshCw } from 'lucide-react';
 import { UserInfo } from '../services/openAiService';
+import { useToast } from '@/components/ui/use-toast';
 
 const CoachingSession = () => {
   const [currentState, setCurrentState] = useState<CurrentStateData>({
@@ -32,6 +33,7 @@ const CoachingSession = () => {
   
   const [showTest, setShowTest] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const { toast } = useToast();
   
   // Завантаження даних з localStorage при монтуванні компонента
   useEffect(() => {
@@ -136,6 +138,52 @@ const CoachingSession = () => {
     }
   };
   
+  // Функція для очищення всіх даних сесії
+  const handleRestartSession = () => {
+    // Очищуємо всі дані з localStorage
+    localStorage.removeItem('currentState');
+    localStorage.removeItem('desiredState');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('songLyrics');
+    localStorage.removeItem('songAudioUrl');
+    localStorage.removeItem('songTaskId');
+    
+    // Скидаємо стани до початкових значень
+    setCurrentState({
+      emotional: '',
+      mental: '',
+      career: '',
+      relationships: '',
+      physical: '',
+      needsToSolve: ''
+    });
+    
+    setDesiredState({
+      emotional: '',
+      mental: '',
+      career: '',
+      relationships: '',
+      physical: '',
+      timeframe: ''
+    });
+    
+    setUserInfo(null);
+    setShowTest(false);
+    
+    // Повідомляємо користувача про успішне очищення даних
+    toast({
+      title: "Сесію оновлено",
+      description: "Всі дані очищено. Ти можеш почати спочатку.",
+      duration: 3000,
+    });
+    
+    // Прокручуємо сторінку вгору
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+  
   return (
     <section id="coaching" className="pt-12 pb-16 bg-calm-50/30">
       <div className="section-container">
@@ -211,6 +259,19 @@ const CoachingSession = () => {
                 desiredState={desiredState} 
                 userInfo={userInfo as UserInfo}
               />
+            </div>
+            
+            {/* Кнопка оновлення сесії */}
+            <div className="flex justify-center mt-16">
+              <Button 
+                variant="outline" 
+                onClick={handleRestartSession}
+                className="gap-2 text-base py-6 px-8 border-primary/50 hover:bg-primary/10"
+                type="button"
+              >
+                <RefreshCw size={18} className="text-primary" />
+                Оновити сесію та почати спочатку
+              </Button>
             </div>
           </>
         )}
