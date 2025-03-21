@@ -8,7 +8,7 @@ import PathGenerator from './PathGenerator';
 import MentalHealthTest from './MentalHealthTest';
 import SongGenerator from './SongGenerator';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit, UserRound } from 'lucide-react';
+import { BrainCircuit, UserRound, Music } from 'lucide-react';
 import { UserInfo } from '../services/openAiService';
 
 const CoachingSession = () => {
@@ -137,20 +137,20 @@ const CoachingSession = () => {
   };
   
   return (
-    <section id="coaching" className="pt-20 pb-20 bg-calm-50/30">
+    <section id="coaching" className="pt-12 pb-16 bg-calm-50/30">
       <div className="section-container">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-block px-4 py-2 rounded-full bg-calm-100 text-calm-800 text-sm font-medium mb-4">
-            Ваша подорож трансформації
+        <div className="text-center max-w-3xl mx-auto mb-10">
+          <span className="inline-block px-4 py-2 rounded-full bg-primary/10 text-primary text-base font-medium mb-3">
+            Твоя подорож трансформації
           </span>
-          <h2 className="text-3xl md:text-4xl font-medium tracking-tight mb-4">
-            Сплануйте свій шлях від точки А до точки Б
+          <h2 className="text-2xl md:text-3xl font-medium tracking-tight mb-3">
+            Сплануй свій шлях від точки А до точки Б
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Заповніть деталі про ваш поточний стан та бажане майбутнє, і Вікторія створить персоналізований план дій та мотиваційну пісню, щоб допомогти вам подолати цей розрив.
+          <p className="text-base text-muted-foreground">
+            Заповни деталі про свій поточний стан та бажане майбутнє, і отримай персоналізований план дій та мотиваційну пісню, щоб допомогти тобі подолати цей розрив.
           </p>
           
-          <div className="mt-8 flex flex-wrap gap-3 justify-center">
+          <div className="mt-6 flex flex-wrap gap-3 justify-center">
             <Button 
               variant="outline" 
               onClick={() => setShowTest(true)}
@@ -159,7 +159,7 @@ const CoachingSession = () => {
               type="button"
             >
               <BrainCircuit size={18} />
-              Пройти тест ментального здоров'я
+              Пройти тест
             </Button>
             
             <Button 
@@ -175,12 +175,12 @@ const CoachingSession = () => {
         </div>
         
         {showTest ? (
-          <div className="max-w-3xl mx-auto mb-12 animate-fade-in-up">
+          <div className="max-w-3xl mx-auto mb-10 animate-fade-in-up">
             <MentalHealthTest onComplete={handleTestComplete} />
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
               <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <CurrentState data={currentState} onChange={setCurrentState} />
               </div>
@@ -195,6 +195,21 @@ const CoachingSession = () => {
                 desiredState={desiredState} 
                 userInfo={userInfo}
                 onUpdateUserInfo={setUserInfo}
+              />
+            </div>
+            
+            <div className="animate-fade-in-up relative" style={{ animationDelay: '0.7s' }}>
+              <div className="absolute -top-16 right-4 sm:right-8 animate-bounce">
+                <div className="bg-primary text-white text-sm px-3 py-2 rounded-full shadow-lg flex items-center gap-1">
+                  <Music size={16} />
+                  <span>Перевір цю функцію!</span>
+                </div>
+                <div className="w-3 h-3 bg-primary transform rotate-45 mx-auto -mt-1.5"></div>
+              </div>
+              <SongGenerator 
+                currentState={currentState} 
+                desiredState={desiredState} 
+                userInfo={userInfo as UserInfo}
               />
             </div>
           </>

@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Music, Loader2, Download, AlertCircle, Play, Pause } from 'lucide-react';
+import { Music, Loader2, Download, AlertCircle, Play, Pause, Sparkles } from 'lucide-react';
 import { generateMotivationalSong, UserInfo } from '../services/openAiService';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -138,7 +139,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       const sunoApiKey = localStorage.getItem('suno_api_key');
       
       if (!sunoApiKey) {
-        throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
+        throw new Error('API ключ не знайдено. Будь ласка, введи свій ключ у відповідному полі.');
       }
       
       console.log('Перевіряємо статус завдання з ID:', taskId);
@@ -269,7 +270,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       const sunoApiKey = localStorage.getItem('suno_api_key');
       
       if (!sunoApiKey) {
-        throw new Error('API ключ не знайдено. Будь ласка, введіть свій ключ у відповідному полі.');
+        throw new Error('API ключ не знайдено. Будь ласка, введи свій ключ у відповідному полі.');
       }
       
       console.log('Використовуємо API ключ Suno:', sunoApiKey.substring(0, 5) + '...');
@@ -288,7 +289,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           },
           body: JSON.stringify({
             prompt: songLyrics.lyrics,
-            style: "Pop",
+            style: "Pop Rock",  // Changed to Pop Rock
             title: songLyrics.title,
             customMode: true,
             instrumental: false,
@@ -333,9 +334,9 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       } catch (fetchError: any) {
         console.error('Помилка запиту до API:', fetchError);
         if (fetchError.name === 'AbortError') {
-          throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуйте ще раз.');
+          throw new Error('Запит до API перевищив час очікування. Будь ласка, спробуй ще раз.');
         } else if (fetchError.message === 'Failed to fetch') {
-          throw new Error('Неможливо з\'єднатися з API. Перевірте своє інтернет-з\'єднання, коректність API ключа або спробуйте пізніше.');
+          throw new Error('Неможливо з\'єднатися з API. Перевір своє інтернет-з\'єднання, коректність API ключа або спробуй пізніше.');
         } else {
           throw fetchError;
         }
@@ -363,7 +364,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         console.error('Помилка відтворення аудіо:', error);
         toast({
           title: "Помилка відтворення",
-          description: "Не вдалося відтворити аудіо. Спробуйте знову.",
+          description: "Не вдалося відтворити аудіо. Спробуй знову.",
           variant: "destructive",
         });
       });
@@ -385,34 +386,40 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
     
     console.log('Починаємо завантаження аудіо з URL:', audioUrl);
     
-    const a = document.createElement('a');
-    a.href = audioUrl;
-    a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    
-    document.body.appendChild(a);
-    
-    try {
-      a.click();
-      console.log('Клік по елементу завантаження виконано');
-      
-      setTimeout(() => {
+    // Створюємо тимчасовий елемент для завантаження
+    fetch(audioUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        // Створюємо об'єкт URL для blob
+        const url = window.URL.createObjectURL(blob);
+        
+        // Створюємо тимчасовий елемент для завантаження
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `${songLyrics?.title || 'motivation_song'}.mp3`;
+        
+        // Додаємо елемент до DOM, викликаємо клік і видаляємо
+        document.body.appendChild(a);
+        a.click();
+        
+        // Очищення
+        window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-      }, 100);
-      
-      toast({
-        title: "Завантаження розпочато",
-        description: "Ваша пісня завантажується. Перевірте папку з завантаженнями.",
+        
+        toast({
+          title: "Завантаження розпочато",
+          description: "Твоя пісня завантажується!",
+        });
+      })
+      .catch(error => {
+        console.error('Помилка при завантаженні аудіо:', error);
+        toast({
+          title: "Помилка завантаження",
+          description: "Не вдалося завантажити аудіофайл. Спробуй ще раз.",
+          variant: "destructive",
+        });
       });
-    } catch (error) {
-      console.error('Помилка при кліку на елемент завантаження:', error);
-      toast({
-        title: "Помилка завантаження",
-        description: "Не вдалося завантажити аудіофайл. Спробуйте відкрити посилання в новій вкладці.",
-        variant: "destructive",
-      });
-    }
   };
 
   const formatLyrics = (lyrics: string) => {
@@ -489,20 +496,20 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
   };
 
   return (
-    <Card className="w-full border-calm-100 shadow-sm">
-      <CardHeader className="bg-calm-50 border-b border-calm-100">
+    <Card className="w-full border-calm-100 shadow-md overflow-hidden animated-gradient">
+      <CardHeader className="bg-primary/10 border-b border-calm-100 py-4">
         <div className="flex items-center gap-2">
-          <Music size={20} className="text-primary" />
-          <CardTitle className="text-xl font-medium">Мотиваційна пісня</CardTitle>
+          <Music size={22} className="text-primary" />
+          <CardTitle className="text-xl font-medium">Твоя мотиваційна пісня</CardTitle>
         </div>
-        <CardDescription>
-          Створіть персоналізовану мотиваційну пісню на основі вашого бажаного стану
+        <CardDescription className="text-base">
+          Створи унікальну мотиваційну пісню у стилі поп-рок, яка надихне тебе на шляху до мети
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className="p-4 sm:p-5">
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert variant="destructive" className="mb-5">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Помилка</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
@@ -510,48 +517,53 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
         )}
         
         {!songLyrics ? (
-          <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
-            <div className="mb-6 text-muted-foreground max-w-md">
-              <p>Натисніть кнопку нижче, щоб створити персоналізовану мотиваційну пісню, яка допоможе вам досягти бажаного стану.</p>
+          <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center">
+            <div className="bg-primary/5 p-5 rounded-xl mb-6 max-w-md border border-primary/20 shadow-sm">
+              <Sparkles size={28} className="text-primary mx-auto mb-3" />
+              <p className="text-base">
+                Натисни кнопку нижче, щоб створити свою унікальну мотиваційну пісню в стилі поп-рок, 
+                яка допоможе тобі досягти бажаного стану.
+              </p>
             </div>
             
             <Button 
               onClick={handleGenerateLyrics}
               disabled={isGeneratingLyrics}
-              className="min-w-[200px]"
+              className="min-w-[200px] text-lg py-6"
+              size="lg"
               type="button"
             >
               {isGeneratingLyrics ? (
                 <>
-                  <Loader2 size={20} className="mr-2 animate-spin" />
-                  Генеруємо текст пісні...
+                  <Loader2 size={22} className="mr-2 animate-spin" />
+                  Створюємо текст пісні...
                 </>
               ) : (
                 <>
-                  <Music size={20} className="mr-2" />
-                  Створити пісню
+                  <Music size={22} className="mr-2" />
+                  Створити мою пісню
                 </>
               )}
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <Tabs defaultValue="lyrics" className="w-full">
-              <TabsList className="w-full overflow-x-auto">
-                <TabsTrigger value="lyrics">Текст пісні</TabsTrigger>
-                <TabsTrigger value="audio" disabled={!audioUrl}>Аудіо</TabsTrigger>
+              <TabsList className="w-full overflow-x-auto text-base">
+                <TabsTrigger value="lyrics" className="text-base py-2">Текст пісні</TabsTrigger>
+                <TabsTrigger value="audio" disabled={!audioUrl} className="text-base py-2">Аудіо</TabsTrigger>
               </TabsList>
               
-              <TabsContent value="lyrics" className="p-4 border rounded-md mt-4">
+              <TabsContent value="lyrics" className="p-4 border rounded-md mt-4 bg-white">
                 <div className="mb-4">
                   <h3 className="text-xl font-medium mb-2 break-words">{songLyrics.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Персоналізована пісня для {getFullUserName()}
+                  <p className="text-base text-muted-foreground mb-4">
+                    Персональна пісня для {getFullUserName()} у стилі поп-рок
                   </p>
                 </div>
                 
                 <ScrollArea className="h-[300px] w-full pr-4">
-                  <div className="space-y-2 text-base">
+                  <div className="space-y-1 text-lg">
                     {formatLyrics(songLyrics.lyrics)}
                   </div>
                 </ScrollArea>
@@ -561,7 +573,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                     {isGeneratingAudio ? (
                       <div className="text-center space-y-2">
                         <Loader2 size={24} className="mx-auto animate-spin" />
-                        <p className="text-sm text-muted-foreground">Створюємо аудіо (може зайняти до 5 хвилин)...</p>
+                        <p className="text-base text-muted-foreground">Створюємо аудіо (може зайняти до 5 хвилин)...</p>
                         
                         {taskId && (
                           <Button 
@@ -578,10 +590,11 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                       <Button 
                         onClick={handleGenerateAudio}
                         disabled={isGeneratingAudio}
-                        className="w-full"
+                        className="w-full py-6 text-lg"
+                        size="lg"
                         type="button"
                       >
-                        <Music size={20} className="mr-2" />
+                        <Music size={22} className="mr-2" />
                         Створити аудіо пісні
                       </Button>
                     )}
@@ -589,13 +602,13 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                 )}
               </TabsContent>
               
-              <TabsContent value="audio" className="p-4 border rounded-md mt-4">
+              <TabsContent value="audio" className="p-4 border rounded-md mt-4 bg-white">
                 {audioUrl && (
                   <div className="space-y-6">
                     <div className="text-center">
                       <h3 className="text-xl font-medium mb-2 break-words">{songLyrics.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Персоналізована пісня для {getFullUserName()}
+                      <p className="text-base text-muted-foreground">
+                        Твоя унікальна пісня у стилі поп-рок
                       </p>
                     </div>
                     
@@ -604,22 +617,24 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
                         variant="outline" 
                         size="icon" 
                         onClick={togglePlayPause}
+                        className="h-14 w-14"
                       >
-                        {isPlaying ? <Pause size={20} /> : <Play size={20} />}
+                        {isPlaying ? <Pause size={24} /> : <Play size={24} />}
                       </Button>
                       
                       <Button 
                         variant="outline" 
                         size="icon"
                         onClick={downloadAudio}
+                        className="h-14 w-14"
                       >
-                        <Download size={20} />
+                        <Download size={24} />
                       </Button>
                     </div>
                     
                     <div className="p-4 bg-muted/50 rounded-md">
-                      <p className="text-sm text-center">
-                        Пісня створена з використанням штучного інтелекту на основі вашого бажаного стану.
+                      <p className="text-base text-center">
+                        Пісня створена з використанням штучного інтелекту спеціально для тебе!
                       </p>
                     </div>
                   </div>
@@ -631,7 +646,7 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
       </CardContent>
 
       {songLyrics && (
-        <CardFooter className="bg-calm-50 border-t border-calm-100 p-4 flex justify-between flex-wrap gap-2">
+        <CardFooter className="bg-primary/10 border-t border-calm-100 p-4 flex justify-between flex-wrap gap-2">
           <Button 
             variant="outline" 
             onClick={handleGenerateLyrics}
@@ -644,15 +659,48 @@ const SongGenerator = ({ currentState, desiredState, userInfo }: SongGeneratorPr
           {audioUrl && (
             <Button 
               onClick={downloadAudio}
-              className="gap-2"
+              className="gap-2 bg-primary hover:bg-primary/90 py-6"
+              size="lg"
               type="button"
             >
-              <Download size={16} />
+              <Download size={20} />
               Завантажити пісню
             </Button>
           )}
         </CardFooter>
       )}
+
+      <style jsx>{`
+        .animated-gradient {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .animated-gradient::before {
+          content: '';
+          position: absolute;
+          top: -10px;
+          left: -10px;
+          right: -10px;
+          bottom: -10px;
+          background: linear-gradient(45deg, rgba(142, 236, 200, 0.1), rgba(100, 204, 197, 0.1), rgba(76, 178, 157, 0.1));
+          z-index: -1;
+          animation: gradient 8s ease infinite;
+          background-size: 200% 200%;
+        }
+        
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+      `}</style>
     </Card>
   );
 };

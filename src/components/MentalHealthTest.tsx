@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,52 +19,52 @@ interface Question {
 const mentalHealthQuestions: Question[] = [
   {
     id: 1,
-    text: "Як часто ви відчуваєте стрес або тривогу?",
+    text: "Як часто ти відчуваєш стрес або тривогу?",
     options: ["Рідко або ніколи", "Іноді", "Досить часто", "Майже весь час"]
   },
   {
     id: 2,
-    text: "Як би ви оцінили якість свого сну?",
+    text: "Як би ти оцінив(ла) якість свого сну?",
     options: ["Відмінна", "Добра", "Задовільна", "Погана"]
   },
   {
     id: 3,
-    text: "Як часто ви відчуваєте себе виснаженим або без енергії?",
+    text: "Як часто ти відчуваєш себе виснаженим або без енергії?",
     options: ["Рідко або ніколи", "Іноді", "Досить часто", "Майже весь час"]
   },
   {
     id: 4,
-    text: "Наскільки легко вам сконцентруватися на завданнях?",
+    text: "Наскільки легко тобі сконцентруватися на завданнях?",
     options: ["Дуже легко", "Легко", "Не завжди легко", "Важко"]
   },
   {
     id: 5,
-    text: "Чи відчуваєте ви радість від діяльності, яка раніше приносила задоволення?",
+    text: "Чи відчуваєш ти радість від діяльності, яка раніше приносила задоволення?",
     options: ["Так, повною мірою", "Здебільшого так", "Не так як раніше", "Майже ні"]
   },
   {
     id: 6,
-    text: "Як би ви оцінили свою продуктивність на роботі або навчанні?",
+    text: "Як би ти оцінив(ла) свою продуктивність на роботі або навчанні?",
     options: ["Відмінна", "Добра", "Задовільна", "Низька"]
   },
   {
     id: 7,
-    text: "Наскільки задоволені ви своїми стосунками з близькими людьми?",
-    options: ["Дуже задоволений", "Здебільшого задоволений", "Частково задоволений", "Не задоволений"]
+    text: "Наскільки ти задоволений(а) своїми стосунками з близькими людьми?",
+    options: ["Дуже задоволений(а)", "Здебільшого задоволений(а)", "Частково задоволений(а)", "Не задоволений(а)"]
   },
   {
     id: 8,
-    text: "Як часто ви займаєтесь фізичними вправами або активним відпочинком?",
+    text: "Як часто ти займаєшся фізичними вправами або активним відпочинком?",
     options: ["Регулярно (3-5 разів на тиждень)", "Час від часу (1-2 рази на тиждень)", "Рідко", "Майже ніколи"]
   },
   {
     id: 9,
-    text: "Наскільки ви задоволені своїм професійним розвитком?",
-    options: ["Дуже задоволений", "Здебільшого задоволений", "Частково задоволений", "Не задоволений"]
+    text: "Наскільки ти задоволений(а) своїм професійним розвитком?",
+    options: ["Дуже задоволений(а)", "Здебільшого задоволений(а)", "Частково задоволений(а)", "Не задоволений(а)"]
   },
   {
     id: 10,
-    text: "Як часто ви практикуєте техніки релаксації або медитації?",
+    text: "Як часто ти практикуєш техніки релаксації або медитації?",
     options: ["Регулярно", "Час від часу", "Рідко", "Ніколи"]
   }
 ];
@@ -134,7 +135,7 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     if (!apiKeySet) {
       toast({
         title: "API-ключ відсутній",
-        description: "Будь ласка, введіть свій API-ключ OpenAI для продовження",
+        description: "Будь ласка, введи свій API-ключ OpenAI для продовження",
         variant: "destructive",
       });
       return;
@@ -143,7 +144,7 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
     if (!userInfo) {
       toast({
         title: "Інформація користувача відсутня",
-        description: "Будь ласка, введіть свою особисту інформацію перед продовженням",
+        description: "Будь ласка, введи свою особисту інформацію перед продовженням",
         variant: "destructive",
       });
       return;
@@ -161,7 +162,7 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
       setIsGenerating(false);
       toast({
         title: "Помилка генерації",
-        description: error.message || "Не вдалося згенерувати результати тесту. Перевірте свій API-ключ та спробуйте знову.",
+        description: error.message || "Не вдалося згенерувати результати тесту. Перевір свій API-ключ та спробуй знову.",
         variant: "destructive",
       });
     }
@@ -185,20 +186,20 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
   
   return (
     <Card className="w-full border-calm-100 shadow-sm overflow-hidden">
-      <CardHeader className="bg-calm-50 border-b border-calm-100">
+      <CardHeader className="bg-calm-50 border-b border-calm-100 py-4">
         <div className="flex items-center gap-2">
           <Brain size={20} className="text-primary" />
           <CardTitle className="text-xl font-medium">Тест ментального здоров'я</CardTitle>
         </div>
         <CardDescription>
-          Цей тест допоможе оцінити ваш поточний стан та визначити бажаний стан у різних сферах життя
+          Цей тест допоможе оцінити твій поточний стан та визначити бажаний стан у різних сферах життя
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-5">
         {!testCompleted ? (
           currentStep < mentalHealthQuestions.length ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Питання {currentStep + 1} з {mentalHealthQuestions.length}</span>
                 <span>Заповнено: {Math.round(Object.keys(answers).length / mentalHealthQuestions.length * 100)}%</span>
@@ -227,12 +228,12 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
               </RadioGroup>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="flex flex-col items-center justify-center py-8 text-center">
               <CheckCircle2 size={48} className="text-primary mb-4" />
               <h3 className="text-xl font-medium mb-2">Тест завершено!</h3>
-              <p className="text-muted-foreground mb-6">
-                Дякуємо за проходження тесту. Зараз Вікторія проаналізує ваші відповіді 
-                та підготує персоналізовані рекомендації щодо вашого поточного та бажаного стану.
+              <p className="text-muted-foreground mb-5">
+                Дякуємо за проходження тесту. Зараз Вікторія проаналізує твої відповіді 
+                та підготує персоналізовані рекомендації щодо твого поточного та бажаного стану.
               </p>
               
               <Button 
@@ -252,12 +253,12 @@ const MentalHealthTest = ({ onComplete }: MentalHealthTestProps) => {
             </div>
           )
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-6">
             <CheckCircle2 size={48} className="text-primary mx-auto mb-4" />
             <h3 className="text-xl font-medium mb-2">Аналіз завершено!</h3>
             <p className="text-muted-foreground">
               Результати тесту були використані для заповнення полів поточного та бажаного стану. 
-              Тепер ви можете переглянути їх і за необхідності відредагувати.
+              Тепер ти можеш переглянути їх і за необхідності відредагувати.
             </p>
           </div>
         )}
